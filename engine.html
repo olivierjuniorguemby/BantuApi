@@ -1,0 +1,3216 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+</head>
+<body>
+
+
+<script>
+	/********************************************************************
+ PACK NLP FRANÇAIS
+ Auteur : ChatGPT
+ Description :
+ Ensemble de fonctions linguistiques pour construire
+ un moteur Français ↔ langue locale.
+********************************************************************/
+
+/********************************************************
+ LEXIQUE PAR DOMAINES
+ Objectif : ajouter des mots sans casser le moteur
+********************************************************/
+const lexiqueDomaines = {
+    voyages: {
+        noms: {
+            hôtel: "otɛlɛ",
+            passeport: "paspɔr",
+            billet: "tikɛ",
+            avion: "mpɛpɔ",
+            route: "nzela",
+            valise: "valizi",
+            voyage: "mobembo"
+        },
+        verbes: {
+            voyager: "sala mobembo",
+            partir: "kende",
+            arriver: "koma",
+            réserver: "bomba"
+        }
+    },
+
+    informatique: {
+        noms: {
+            ordinateur: "ordinatɛrɛ",
+            téléphone: "telefone",
+            fichier: "fichier",
+            donnée: "donnée",
+            logiciel: "logiciel",
+            réseau: "réseau",
+            motdepasse: "mot de passe"
+        },
+        verbes: {
+            cliquer: "finya",
+            envoyer: "tinda",
+            télécharger: "zwa",
+            enregistrer: "bomba",
+            supprimer: "longola"
+        }
+    },
+
+    sante: {
+        noms: {
+            médecin: "monganga",
+            malade: "moto ya maladi",
+            médicament: "nkisi",
+            hôpital: "lopitalo",
+            douleur: "pasi",
+            fièvre: "fievre"
+        },
+        verbes: {
+            soigner: "sunga",
+            guérir: "bika",
+            souffrir: "yoka pasi",
+            consulter: "mona monganga"
+        },
+        adjectifs: {
+            malade: "ya maladi",
+            fatigué: "alembi"
+        }
+    },
+
+    commerce: {
+        noms: {
+            prix: "ntalo",
+            argent: "mbongo",
+            commande: "commande",
+            stock: "stock",
+            client: "client",
+            facture: "facture",
+            livraison: "livraison"
+        },
+        verbes: {
+            acheter: "somba",
+            vendre: "tekisa",
+            payer: "futa",
+            commander: "sala commande",
+            livrer: "memela"
+        }
+    },
+
+    education: {
+        noms: {
+            école: "eteyelo",
+            élève: "mwana kelasi",
+            professeur: "molakisi",
+            livre: "buku",
+            cours: "liteya",
+            examen: "ekzamɛ"
+        },
+        verbes: {
+            apprendre: "yekola",
+            enseigner: "lakisa",
+            lire: "tanga",
+            écrire: "koma"
+        }
+    },
+
+    couleurs: {
+        adjectifs: {
+            rouge: "motane",
+            noir: "moindo",
+            blanc: "mpembe",
+            bleu: "ble",
+            vert: "vert",
+            jaune: "jaune"
+        }
+    },
+
+    animaux: {
+        noms: {
+            chien: "mbwa",
+            chat: "nyawu",
+            chèvre: "ntaba",
+            vache: "ngombe",
+            poule: "nsoso",
+            poisson: "mbisi"
+        }
+    },
+
+    statistiques: {
+        noms: {
+            total: "motango mobimba",
+            moyenne: "moyenne",
+            pourcentage: "pourcentage",
+            somme: "somme",
+            minimum: "minimum",
+            maximum: "maximum",
+            résultat: "résultat"
+        },
+        verbes: {
+            compter: "tanga",
+            calculer: "sala calcul",
+            additionner: "bakisa",
+            soustraire: "longola",
+            diviser: "kabola",
+            multiplier: "kobakisa mbala"
+        }
+    }
+};
+
+const chiffresLingala = {
+    0: "zero",
+    1: "moko",
+    2: "mibale",
+    3: "misato",
+    4: "minei",
+    5: "mitano",
+    6: "motoba",
+    7: "sambo",
+    8: "mwambi",
+    9: "libwa",
+    10: "zomi",
+    20: "ntuku mibale",
+    30: "ntuku misato",
+    40: "ntuku minei",
+    50: "ntuku mitano",
+    100: "nkama moko"
+};
+
+const verbesAller = [
+ "vais","vas","va",
+ "allons","allez","vont"
+];
+
+const auxiliaireProgressif = {
+    je: "nazali",
+    tu: "ozali",
+    il: "azali",
+    elle: "azali",
+    nous: "tozali",
+    vous: "bozali",
+    ils: "bazali",
+    elles: "bazali"
+};
+
+const dictionnaireContextuelLingala = {
+    "là-bas": "kuna",
+    "ici": "awa",
+    "demain": "lobi",
+    "aujourd'hui": "lelo",
+    "avec": "elongo na",
+    "dans": "na",
+    "et": "mpe",
+    "mais": "kasi",
+    "pourquoi": "mpo na nini",
+};
+
+/********************************************************
+ PRONOMS GLOBAUX
+********************************************************/
+const pronomsGlobaux = {
+
+    personnels: [
+        "je","j'",
+        "tu","t'",
+        "il","elle",
+        "nous","vous",
+        "ils","elles"
+    ],
+
+    relatifs: [
+        "qui","que",
+        "dont","où",
+        "lequel"
+    ],
+
+    interrogatifs: [
+        "qui","quoi",
+        "quel","quelle"
+    ]
+};
+
+/********************************************************
+ CATEGORIES AVANCEES
+********************************************************/
+const nomsConnus = ["pain", "eau", "maison", "pomme", "enfants", "riz", "marché",
+"avion",
+"voiture",
+"route",
+"ami",
+"travail",
+"école",
+"village"];
+const adjectifsConnus = ["grand", "petit", "rouge", "malade", "fatigué"];
+const adverbesConnus = ["vite", "lentement", "bien", "mal", "souvent"];
+const prepositionsConnues = ["à", "de", "dans", "pour", "avec", "sans", "sur"];
+
+const infinitifsConnus = [
+    "manger", "aller", "venir", "faire", "être", "avoir", "parler"
+];
+
+const conjugaisonsAvancees = {
+    manger: {
+        infinitif: "manger",
+        present: {
+            je: "mange",
+            tu: "manges",
+            il: "mange",
+            nous: "mangeons",
+            vous: "mangez",
+            ils: "mangent"
+        },
+        futur: {
+            je: "mangerai",
+            tu: "mangeras",
+            il: "mangera",
+            nous: "mangerons",
+            vous: "mangerez",
+            ils: "mangeront"
+        },
+        imparfait: {
+            je: "mangeais",
+            tu: "mangeais",
+            il: "mangeait",
+            nous: "mangions",
+            vous: "mangiez",
+            ils: "mangeaient"
+        },
+        participePasse: "mangé",
+        participePresent: "mangeant"
+    },
+
+    avoir: {
+        infinitif: "avoir",
+        present: {
+            je: "ai",
+            tu: "as",
+            il: "a",
+            nous: "avons",
+            vous: "avez",
+            ils: "ont"
+        },
+        imparfait: {
+            je: "avais",
+            tu: "avais",
+            il: "avait",
+            nous: "avions",
+            vous: "aviez",
+            ils: "avaient"
+        },
+        futur: {
+            je: "aurai",
+            tu: "auras",
+            il: "aura",
+            nous: "aurons",
+            vous: "aurez",
+            ils: "auront"
+        },
+        conditionnel: {
+            je: "aurais",
+            tu: "aurais",
+            il: "aurait",
+            nous: "aurions",
+            vous: "auriez",
+            ils: "auraient"
+        },
+        subjonctif: {
+            je: "aie",
+            tu: "aies",
+            il: "ait",
+            nous: "ayons",
+            vous: "ayez",
+            ils: "aient"
+        }
+    },
+
+    être: {
+        infinitif: "être",
+        present: {
+            je: "suis",
+            tu: "es",
+            il: "est",
+            nous: "sommes",
+            vous: "êtes",
+            ils: "sont"
+        },
+        imparfait: {
+            je: "étais",
+            tu: "étais",
+            il: "était",
+            nous: "étions",
+            vous: "étiez",
+            ils: "étaient"
+        },
+        futur: {
+            je: "serai",
+            tu: "seras",
+            il: "sera",
+            nous: "serons",
+            vous: "serez",
+            ils: "seront"
+        }
+    }
+};
+
+
+/********************************************************
+ EXPRESSIONS FIXES
+********************************************************/
+const expressionsFixes = [
+
+    ["avoir", "faim"],
+    ["avoir", "soif"],
+    ["avoir", "peur"],
+    ["avoir", "raison"],
+
+    ["avaient", "faim"],
+	["a", "faim"],
+	["ai", "faim"],
+	["as", "faim"]
+];
+
+
+/********************************************************
+ VERBES MODAUX
+********************************************************/
+const verbesModaux = [
+
+    "vais",
+    "vas",
+    "va",
+    "allons",
+    "allez",
+    "vont",
+
+    "veux",
+    "veut",
+    "pouvoir",
+    "peux",
+    "peut",
+
+    "dois",
+    "doit"
+];
+
+
+/********************************************************
+ VERBES D'ETAT
+********************************************************/
+const verbesEtat = [
+
+    "suis","es","est",
+    "sommes","êtes","sont",
+
+    "étais","était",
+
+    "serai","sera",
+
+    "sois","soit"
+];
+
+/********************************************************
+ MOTS NON VERBAUX
+********************************************************/
+const motsNonVerbaux = [
+
+    // articles
+    "le","la","les","un","une","des",
+    "du","de","de la",
+
+    // pronoms
+    "je","j'","tu","il","elle",
+    "nous","vous","ils","elles",
+
+    // connecteurs
+    "que","qui","quoi",
+    "parce","car","si",
+    "mais","ou","et",
+
+    // négation
+    "ne","pas",
+
+    // prépositions
+    "à","de","dans","pour","avec",
+
+    // divers
+    "en",
+
+    "y"
+];
+
+/********************************************************
+ CONJONCTIONS DE SUBORDINATION
+********************************************************/
+const conjonctionsSubordination = [
+
+    "que",
+    "qu'",
+    "si",
+    "quand",
+    "comme",
+    "lorsque",
+    "puisque"
+];
+
+/********************************************************
+ LISTE VERBES CONNUS
+********************************************************/
+const verbesConnus = [
+
+    "mange",
+    "manger",
+    "mangé",
+    "mangerai",
+    "manges",
+    "mangeons",
+    "mangez",
+    "mangent",
+    "mangeras",
+    "mangera",
+    "mangerons",
+    "mangerez",
+    "mangeront",
+
+    "vais",
+    "aller",
+    "aurai",
+    "ai",
+    "as",
+    "a",
+    "est",
+    "suis",
+    "es",
+    "sont",
+    "sommes",
+    "êtes",
+
+
+    "sois",
+	"soit",
+	"soyons",
+	"soyez",
+	"soient",
+
+	"aie",
+	"aies",
+	"ait",
+	"ayons",
+	"ayez",
+	"aient",
+
+    "ai",
+    "as",
+    "a",
+    "avons",
+    "avez",
+    "ont",
+
+    "veux",
+    "veut",
+    "veux",
+    "peux",
+    "peut",
+    "dois",
+    "doit",
+
+    "vais",
+    "vas",
+    "va",
+    "allons",
+    "allez",
+    "vont",
+
+    "voir",
+    "vois",
+    "voit",
+    "voient",
+    "voyez",
+    "voyons",
+   
+    "irai","iras","ira","irons","irez","iront",
+    "verrai","verras","verra","verrons","verrez","verront",
+    "vas"
+    
+    
+
+];
+
+/********************************************************
+ MOTS A IGNORER POUR COD // Je ne vais manger
+********************************************************/
+const motsInutilesCOD = [
+
+    "pas",
+    "ne",
+    "jamais",
+    "plus",
+
+    // infinitifs fréquents
+    "manger",
+    "aller",
+    "venir",
+    "faire",
+    "être",
+    "avoir"
+];
+
+/********************************************************
+ 1. TOKENISATION
+ Sépare une phrase en mots
+********************************************************/
+/********************************************************
+ TOKENISATION AMELIOREE
+********************************************************/
+function tokenizer(phrase) {
+
+    return phrase
+        .toLowerCase()
+
+        .replace(/aujourd'hui/g, "aujourdhui")
+
+        // supprimer ponctuation
+        .replace(/[.,!?;:()]/g, "")
+
+        // séparer apostrophes
+        .replace(/'/g, "' ")
+
+        // découpage
+        .split(/\s+/)
+
+        // supprimer vides
+        .filter(t => t.length > 0);
+}
+
+/********************************************************
+ 2. DETECTION ARTICLES
+********************************************************/
+function detectArticles(tokens) {
+
+    const articles = {
+        definis: ["le", "la", "les", "l"],
+        indefinis: ["un", "une", "des"],
+        partitifs: ["du", "de la", "de l"]
+    };
+
+    return tokens.filter(t =>
+        articles.definis.includes(t) ||
+        articles.indefinis.includes(t)
+    );
+}
+
+/********************************************************
+ 3. DETECTION PRONOMS
+********************************************************/
+function detectPronoms(tokens) {
+
+    let resultat = [];
+
+    tokens.forEach(t => {
+
+        for(let type in pronomsGlobaux) {
+
+            if(
+                pronomsGlobaux[type].includes(t)
+            ) {
+
+                resultat.push({
+                    mot: t,
+                    type: type
+                });
+            }
+        }
+    });
+
+    return resultat;
+}
+
+/********************************************************
+ 4. DETECTION NEGATION
+********************************************************/
+function detectNegation(tokens) {
+
+    const negations = [
+        "ne",
+        "pas",
+        "jamais",
+        "plus",
+        "rien",
+        "aucun"
+    ];
+
+    const resultat = tokens.filter(t =>
+        negations.includes(t)
+    );
+
+    return {
+        negatif: resultat.length > 0,
+        mots: resultat
+    };
+}
+
+/********************************************************
+ 5. DETECTION CONNECTEURS
+********************************************************/
+function detectConnecteurs(tokens) {
+
+    const connecteurs = {
+        cause: ["parce que", "car", "puisque"],
+        opposition: ["mais", "cependant"],
+        addition: ["et", "aussi"],
+        condition: ["si"]
+    };
+
+    return connecteurs;
+}
+
+/********************************************************
+ 6. DETECTION TEMPS VERBAUX
+ Approche simple
+********************************************************/
+function detectTempsVerbal(tokens) {
+
+    const participe = mot => {
+
+        return (
+            mot.endsWith("é") ||
+            mot.endsWith("i") ||
+            mot.length > 2 && mot.endsWith("u")
+        );
+    };
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+        const suivant = tokens[i + 1];
+
+        /************************************************
+         PASSE COMPOSE
+         j'ai mangé
+        ************************************************/
+        const auxiliairesPresent = [
+            "ai","as","a",
+            "avons","avez","ont",
+
+            "suis","es","est",
+            "sommes","êtes","sont"
+        ];
+
+        if(
+            auxiliairesPresent.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "passé composé";
+        }
+
+        /************************************************
+         PLUS QUE PARFAIT
+         j'avais mangé
+        ************************************************/
+        const auxiliairesImparfait = [
+            "avais","avait","avions",
+            "aviez","avaient",
+
+            "étais","était",
+            "étions","étiez","étaient"
+        ];
+
+        if(
+            auxiliairesImparfait.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "plus-que-parfait";
+        }
+
+        /************************************************
+         FUTUR ANTERIEUR
+         j'aurai mangé
+        ************************************************/
+        const auxiliairesFutur = [
+            "aurai","auras","aura",
+            "aurons","aurez","auront",
+
+            "serai","seras","sera",
+            "serons","serez","seront"
+        ];
+
+        if(
+            auxiliairesFutur.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "futur antérieur";
+        }
+
+        /************************************************
+         PASSE ANTERIEUR
+         j'eus mangé
+        ************************************************/
+        const auxiliairesPasseSimple = [
+            "eus","eut","eûmes",
+            "eûtes","eurent",
+
+            "fus","fut","fûmes",
+            "fûtes","furent"
+        ];
+
+        if(
+            auxiliairesPasseSimple.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "passé antérieur";
+        }
+
+        /************************************************
+         CONDITIONNEL PASSE
+         j'aurais mangé
+        ************************************************/
+        const auxiliairesConditionnel = [
+            "aurais","aurait","aurions",
+            "auriez","auraient",
+
+            "serais","serait","serions",
+            "seriez","seraient"
+        ];
+
+        if(
+            auxiliairesConditionnel.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "conditionnel passé";
+        }
+
+        /************************************************
+         SUBJONCTIF PASSE
+         que j'aie mangé
+        ************************************************/
+        const auxiliairesSubjonctifPasse = [
+            "aie","aies","ait",
+            "ayons","ayez","aient",
+
+            "sois","soit","soyons",
+            "soyez","soient"
+        ];
+
+        if(
+            auxiliairesSubjonctifPasse.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "subjonctif passé";
+        }
+
+        /************************************************
+         IMPERATIF COMPOSE
+         aie mangé
+        ************************************************/
+        const imperatifCompose = [
+            "aie","ayons","ayez",
+            "sois","soyons","soyez"
+        ];
+
+        if(
+            imperatifCompose.includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "impératif composé";
+        }
+
+        /************************************************
+         INFINITIF PASSE
+         avoir mangé
+        ************************************************/
+        if(
+            ["avoir","être"].includes(mot) &&
+            suivant &&
+            participe(suivant)
+        ) {
+
+            return "infinitif passé";
+        }
+
+        /************************************************
+         GERONDIF
+         en mangeant
+        ************************************************/
+        if(
+            mot === "en" &&
+            suivant &&
+            suivant.endsWith("ant")
+        ) {
+
+            return "gérondif";
+        }
+
+        /************************************************
+         PARTICIPE PRESENT
+         mangeant
+        ************************************************/
+        if(mot.endsWith("ant")) {
+
+            return "participe présent";
+        }
+
+        /************************************************
+         SUBJONCTIF PRESENT
+        ************************************************/
+        const subjonctifPresent = [
+            "aille","ailles","aille",
+            "allions","alliez","aillent",
+
+            "sois","soit","soyons",
+            "soyez","soient",
+
+            "aie","aies","ait",
+            "ayons","ayez","aient"
+        ];
+
+        if(subjonctifPresent.includes(mot)) {
+
+            return "subjonctif présent";
+        }
+
+        /************************************************
+         CONDITIONNEL PRESENT
+        ************************************************/
+        if(
+            mot.endsWith("rais") ||
+            mot.endsWith("rait") ||
+            mot.endsWith("rions") ||
+            mot.endsWith("riez") ||
+            mot.endsWith("raient")
+        ) {
+
+            return "conditionnel présent";
+        }
+
+        /************************************************
+         FUTUR SIMPLE
+        ************************************************/
+        if(
+            mot.endsWith("rai") ||
+            mot.endsWith("ras") ||
+            mot.endsWith("ra") ||
+            mot.endsWith("rons") ||
+            mot.endsWith("rez") ||
+            mot.endsWith("ront")
+        ) {
+            return "futur simple";
+        }
+
+        /************************************************
+		 PRESENT VERBES IRREGULIERS
+		************************************************/
+		const presentsIrreguliers = [
+
+		    "vais","vas","va",
+		    "allons","allez","vont"
+		];
+
+		if(presentsIrreguliers.includes(mot)) {
+		    return "présent";
+		}
+
+        /************************************************
+         IMPARFAIT
+        ************************************************/
+        if(
+            mot.endsWith("ais") ||
+            mot.endsWith("ait") ||
+            mot.endsWith("ions")
+        ) {
+
+            return "imparfait";
+        }
+
+        /************************************************
+         PASSE SIMPLE
+        ************************************************/
+        if(
+            mot.endsWith("ai") ||
+            mot.endsWith("as") ||
+            mot.endsWith("a") ||
+            mot.endsWith("èrent")
+        ) {
+
+            return "passé simple";
+        }
+
+        /************************************************
+		 INFINITIF
+		************************************************/
+		if(
+		    mot.endsWith("er") ||
+		    mot.endsWith("ir") ||
+		    mot.endsWith("re")
+		) {
+
+		    return "infinitif";
+		}
+    }
+
+    /************************************************
+     PRESENT PAR DEFAUT
+    ************************************************/
+    return "présent";
+}
+/********************************************************
+ 7. DETECTION GENRE ET NOMBRE
+********************************************************/
+function detectGenreNombre(mot) {
+
+	/************************************************
+	 PRONOMS
+	************************************************/
+	const pronomsSansGenre = [
+
+	    "je","j'",
+	    "tu",
+	    "nous",
+	    "vous"
+	];
+
+	if(pronomsSansGenre.includes(mot)) {
+
+	    return {
+
+	        mot,
+
+	        genre: "neutre",
+
+	        nombre: "singulier"
+	    };
+	}
+    let genre = "inconnu";
+    let nombre = "singulier";
+
+    if(mot.endsWith("e")) {
+        genre = "probablement féminin";
+    } else {
+        genre = "probablement masculin";
+    }
+
+    if(mot.endsWith("s")) {
+        nombre = "pluriel";
+    }
+
+    return {
+        mot,
+        genre,
+        nombre
+    };
+}
+
+
+/********************************************************
+ 9. DETECTION SUJET VERBE COMPLEMENT
+********************************************************/
+function detectSVC(tokens) {
+
+	/**********************************************
+	 INTERROGATION INVERSEE
+	**********************************************/
+	const inversion = detectInterrogationInversee(tokens);
+
+	if(inversion) {
+
+	    return {
+
+	        sujet: inversion.sujet,
+
+	        verbe: inversion.verbe,
+
+	        complement: []
+	    };
+	}
+
+    const verbe = detectVerbe(tokens);
+
+    if(!verbe) {
+
+        return {
+            sujet: [],
+            verbe: null,
+            complement: []
+        };
+    }
+
+    /************************************************
+     PREMIER MOT DU VERBE
+    ************************************************/
+    const premierMotVerbe = verbe.split(" ")[0];
+
+    const indexVerbe = tokens.indexOf(premierMotVerbe);
+
+    const tailleVerbe = verbe.split(" ").length;
+
+    /************************************************
+     SUJET
+    ************************************************/
+    const sujet = tokens
+    .slice(0, indexVerbe)
+
+    // supprimer négation
+    .filter(t => t !== "ne")
+
+    // supprimer conjonctions
+    .filter(t =>
+        !conjonctionsSubordination.includes(t)
+    );
+
+    /************************************************
+     SUITE APRES VERBE
+    ************************************************/
+    let suite = tokens.slice(indexVerbe + tailleVerbe);
+
+    /************************************************
+     SI VERBE D'ETAT
+     -> PAS DE COMPLEMENT
+    ************************************************/
+    if(verbesEtat.includes(premierMotVerbe)) {
+
+    return {
+        sujet,
+        verbe,
+        complement: tokens.slice(indexVerbe + tailleVerbe)
+    };
+}
+
+    /************************************************
+     SI VERBE MODAL + INFINITIF
+     -> PAS DE COMPLEMENT
+    ************************************************/
+    if(verbesModaux.includes(premierMotVerbe)) {
+
+        return {
+
+            sujet,
+            verbe,
+
+            /************************************
+             garder ce qui suit l'infinitif
+            ************************************/
+            complement:
+                tokens.slice(
+                    indexVerbe + tailleVerbe
+                )
+        };
+    }
+
+    /************************************************
+     SUPPRIMER NEGATION
+    ************************************************/
+    suite = suite.filter(t =>
+
+        t !== "pas" &&
+        t !== "ne"
+    );
+
+    /************************************************
+     PROPOSITION SECONDAIRE
+    ************************************************/
+    const indexParce = suite.indexOf("parce");
+
+    if(indexParce !== -1) {
+
+        suite = suite.slice(0, indexParce);
+    }
+
+    return {
+
+        sujet,
+        verbe,
+        complement: suite
+    };
+}
+
+/********************************************************
+ 10. DETECTION COD
+********************************************************/
+function detectCOD(tokens) {
+
+    const verbe = detectVerbe(tokens);
+
+    if(!verbe) {
+        return null;
+    }
+
+    /**********************************************
+     PREMIER MOT DU VERBE
+    **********************************************/
+    const premierMotVerbe = verbe.split(" ")[0];
+
+    /**********************************************
+     VERBES D'ETAT = PAS DE COD
+    **********************************************/
+    if(verbesEtat.includes(premierMotVerbe)) {
+        return null;
+    }
+
+    /**********************************************
+     POSITION VERBE
+    **********************************************/
+    const indexVerbe = tokens.indexOf(premierMotVerbe);
+
+    const tailleVerbe = verbe.split(" ").length;
+
+    if(indexVerbe === -1) {
+        return null;
+    }
+
+    /**********************************************
+     RECUPERER SUITE
+    **********************************************/
+    let suite = tokens.slice(indexVerbe + tailleVerbe);
+
+    /**********************************************
+     SUPPRIMER MOTS INUTILES
+    **********************************************/
+    suite = suite.filter(t =>
+        !motsInutilesCOD.includes(t)
+    );
+
+    const indexParce = suite.indexOf("parce");
+
+    if(indexParce !== -1) {
+        suite = suite.slice(0, indexParce);
+    }
+
+    /**********************************************
+     SI VIDE
+    **********************************************/
+    if(suite.length === 0) {
+        return null;
+    }
+
+    return {
+
+        verbe: verbe,
+
+        cod: suite
+    };
+}
+
+/********************************************************
+ 11. DETECTION COI
+********************************************************/
+function detectCOI(tokens) {
+
+    const prepositions = ["à", "de", "pour"];
+
+    for(let i=0; i<tokens.length; i++) {
+
+        if(prepositions.includes(tokens[i])) {
+
+            return {
+                preposition: tokens[i],
+                coi: tokens[i+1]
+            };
+        }
+    }
+
+    return null;
+}
+
+/********************************************************
+ 12. DETECTION PHRASE INTERROGATIVE
+********************************************************/
+function isInterrogative(phrase) {
+    return phrase.includes("?");
+}
+
+/********************************************************
+ 13. DETECTION PHRASE RELATIVE
+********************************************************/
+function detectRelative(tokens) {
+
+    const relatifs = ["qui","que","dont","où"];
+
+    return tokens.some(t => relatifs.includes(t));
+}
+
+/********************************************************
+ 14. DETECTION PHRASE COMPOSEE
+********************************************************/
+function isPhraseComposee(tokens) {
+
+    const conjonctions = ["et","mais","ou","donc","car"];
+
+    return tokens.some(t => conjonctions.includes(t));
+}
+
+/********************************************************
+ 15. ACCORD SUJET VERBE
+********************************************************/
+function verifierAccordSujetVerbe(sujet, verbe) {
+
+    if(sujet === "ils" && !verbe.endsWith("nt")) {
+        return false;
+    }
+
+    return true;
+}
+
+/********************************************************
+ 16. ANALYSE SEMANTIQUE SIMPLE
+********************************************************/
+function analyseSemantique(tokens) {
+
+    const emotions = {
+        joie: ["heureux","content"],
+        tristesse: ["triste","malheureux"]
+    };
+
+    let resultat = [];
+
+    tokens.forEach(t => {
+
+        for(let emo in emotions) {
+
+            if(emotions[emo].includes(t)) {
+                resultat.push({
+                    mot: t,
+                    sens: emo
+                });
+            }
+        }
+    });
+
+    return resultat;
+}
+
+
+/********************************************************
+ 18. DETECTION PONCTUATION
+********************************************************/
+function detectPonctuation(phrase) {
+
+    return phrase.match(/[.,!?;:]/g);
+}
+
+
+/********************************************************
+ 19. DETECTION VERBE
+********************************************************/
+function detectVerbe(tokens) {
+
+    const auxiliaires = [
+        "ai","as","a","avons","avez","ont",
+        "avais","avait","avions","aviez","avaient",
+        "suis","es","est","sommes","êtes","sont"
+    ];
+
+    const modauxAller = ["vais","vas","va","allons","allez","vont"];
+    const participesConnus = verbesConnus.filter(v =>
+
+    v.endsWith("é") ||
+    v.endsWith("i") ||
+    v.endsWith("u")
+);
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+
+        if(auxiliaires.includes(mot)) {
+            for(let j = i + 1; j < tokens.length; j++) {
+                if(tokens[j] === "ne" || tokens[j] === "pas") continue;
+
+                if(participesConnus.includes(tokens[j])) {
+                    return mot + " " + tokens[j];
+                }
+
+                break;
+            }
+        }
+
+        if(modauxAller.includes(mot)) {
+            for(let j = i + 1; j < tokens.length; j++) {
+                if(tokens[j] === "ne" || tokens[j] === "pas" || tokens[j] === "souvent") continue;
+
+                if(tokens[j].endsWith("er") || tokens[j].endsWith("ir") || tokens[j].endsWith("re")) {
+                    return mot + " " + tokens[j];
+                }
+
+                break;
+            }
+
+            return mot;
+        }
+
+        if(verbesConnus.includes(mot)) {
+            return mot;
+        }
+
+        if(typeof racinesVerbalesLingala !== "undefined" && racinesVerbalesLingala[mot]) {
+            return mot;
+        }
+    }
+
+    return null;
+}
+
+/********************************************************
+ 20. DETECTION ATTRIBUT SUJET
+********************************************************/
+function detectAttributSujet(tokens) {
+
+    /************************************************
+     INTERROGATION INVERSEE
+    ************************************************/
+    const inversion = detectInterrogationInversee(tokens);
+
+    if(inversion) {
+        return inversion.attribut;
+    }
+
+    /************************************************
+     ANALYSE NORMALE
+    ************************************************/
+    const verbe = detectVerbe(tokens);
+
+    if(!verbe) return null;
+
+    const premierVerbe = verbe.split(" ")[0];
+
+    if(!verbesEtat.includes(premierVerbe)) {
+        return null;
+    }
+
+    const index = tokens.indexOf(premierVerbe);
+
+    return tokens.slice(index + 1);
+}
+
+/********************************************************
+ 21. DETECTION EXPRESSIONS FIXES
+********************************************************/
+function detectExpressionFixe(tokens) {
+
+    for(let expr of expressionsFixes) {
+
+        for(let i = 0; i < tokens.length; i++) {
+
+            if(
+                tokens[i] === expr[0] &&
+                tokens[i + 1] === expr[1]
+            ) {
+
+                return expr.join(" ");
+            }
+        }
+    }
+
+    return null;
+}
+
+/********************************************************
+ 22. DETECTION INVERSION INTERROGATIVE
+********************************************************/
+function detectInterrogationInversee(tokens) {
+
+    if(tokens.length < 3) {
+        return null;
+    }
+
+    const verbe = detectVerbe(tokens);
+
+    if(!verbe) {
+        return null;
+    }
+
+    const premierVerbe = verbe.split(" ")[0];
+
+    const indexVerbe = tokens.indexOf(premierVerbe);
+
+    // modèle :
+    // qui es tu
+
+    if(
+
+        indexVerbe === 1 &&
+
+        detectPronoms([tokens[2]]).length > 0
+
+    ) {
+
+        return {
+
+            sujet: [tokens[2]],
+
+            verbe: verbe,
+
+            attribut: [tokens[0]]
+        };
+    }
+
+    return null;
+}
+
+/********************************************************
+ 23. TYPE DE PHRASE
+********************************************************/
+function detectTypePhrase(phrase, tokens) {
+
+    if(phrase.includes("?")) {
+        return "interrogative";
+    }
+
+    if(detectNegation(tokens).negatif) {
+        return "négative";
+    }
+
+    return "affirmative";
+}
+
+/********************************************************
+ 24. PROPOSITION PRINCIPALE
+********************************************************/
+function detectPropositionPrincipale(tokens) {
+
+    const connecteurs = [
+        "parce",
+        "que",
+        "quand",
+        "si"
+    ];
+
+    let index = -1;
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        if(connecteurs.includes(tokens[i])) {
+            index = i;
+            break;
+        }
+    }
+
+    if(index === -1) {
+        return tokens;
+    }
+
+    return tokens.slice(0, index);
+}
+
+/********************************************************
+ 25. PROPOSITION SECONDAIRE
+********************************************************/
+function detectPropositionSecondaire(tokens) {
+
+    const connecteurs = [
+        "parce",
+        "que",
+        "quand",
+        "si"
+    ];
+
+    let index = -1;
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        if(connecteurs.includes(tokens[i])) {
+            index = i;
+            break;
+        }
+    }
+
+    if(index === -1) {
+        return null;
+    }
+
+    return tokens.slice(index);
+}
+
+
+
+/********************************************************
+ 28. DETECTION CATEGORIE MOT
+********************************************************/
+function detectCategorieMot(mot) {
+
+    if(detectPronoms([mot]).length > 0) return "pronom";
+    if(detectArticles([mot]).length > 0) return "article";
+    if(nomsConnus.includes(mot)) return "nom";
+    if(adjectifsConnus.includes(mot)) return "adjectif";
+    if(adverbesConnus.includes(mot)) return "adverbe";
+    if(prepositionsConnues.includes(mot)) return "préposition";
+    if(infinitifsConnus.includes(mot)) return "infinitif";
+    if(verbesConnus.includes(mot)) return "verbe";
+
+    return "inconnu";
+}
+
+/********************************************************
+ 29. ANALYSE CATEGORIES
+********************************************************/
+function detectCategories(tokens) {
+
+    return tokens.map(mot => ({
+        mot,
+        categorie: detectCategorieMot(mot)
+    }));
+}
+
+
+/********************************************************
+ 31. DETECTION INFINITIF
+********************************************************/
+function detectInfinitif(tokens) {
+
+    return tokens.filter(mot =>
+        infinitifsConnus.includes(mot) ||
+        mot.endsWith("er") ||
+        mot.endsWith("ir") ||
+        mot.endsWith("re")
+    );
+}
+
+/********************************************************
+ 32. TRANSFORMATION GROUPE VERBAL
+********************************************************/
+function transformerGroupeVerbal(svc) {
+
+    if(!svc || !svc.verbe) return null;
+
+    const morceaux = svc.verbe.split(" ");
+
+    return {
+        verbeComplet: svc.verbe,
+        premierMot: morceaux[0],
+        auxiliaire: morceaux.length > 1 ? morceaux[0] : null,
+        participeOuInfinitif: morceaux.length > 1 ? morceaux[1] : null,
+        estCompose: morceaux.length > 1
+    };
+}
+
+/********************************************************
+ 33. ANALYSE NOM AVANCEE
+********************************************************/
+function analyserNom(mot) {
+
+    if(!nomsConnus.includes(mot)) return null;
+
+    return {
+        mot,
+        categorie: "nom",
+        genreNombre: detectGenreNombre(mot)
+    };
+}
+
+/********************************************************
+ 34. ANALYSE ADJECTIF AVANCEE
+********************************************************/
+function analyserAdjectif(mot) {
+
+    if(!adjectifsConnus.includes(mot)) return null;
+
+    return {
+        mot,
+        categorie: "adjectif",
+        genreNombre: detectGenreNombre(mot)
+    };
+}
+
+/********************************************************
+ 35. ANALYSE ADVERBE AVANCEE
+********************************************************/
+function analyserAdverbe(mot) {
+
+    if(!adverbesConnus.includes(mot)) return null;
+
+    return {
+        mot,
+        categorie: "adverbe",
+        fonction: "modifie verbe/adjectif/phrase"
+    };
+}
+
+/********************************************************
+ 36. ANALYSE PREPOSITION AVANCEE
+********************************************************/
+function analyserPreposition(tokens) {
+
+    let resultats = [];
+
+    tokens.forEach((mot, index) => {
+
+        if(prepositionsConnues.includes(mot)) {
+
+            resultats.push({
+                preposition: mot,
+                complement: tokens[index + 1] || null
+            });
+        }
+    });
+
+    return resultats;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/********************************************************************
+ MODULE 7 — LINGALA NATIF : ASPECT / CONTEXTE / CLASSES
+********************************************************************/
+
+/********************************************************
+ 1. CLASSES NOMINALES LINGALA
+********************************************************/
+const classesNominalesLingala = {
+    enfant: {
+        singulier: "mwana",
+        pluriel: "bana",
+        classe: "humain"
+    },
+    enfants: {
+        singulier: "mwana",
+        pluriel: "bana",
+        classe: "humain"
+    },
+    chose: {
+        singulier: "eloko",
+        pluriel: "biloko",
+        classe: "objet"
+    },
+    choses: {
+        singulier: "eloko",
+        pluriel: "biloko",
+        classe: "objet"
+    },
+    personne: {
+        singulier: "moto",
+        pluriel: "bato",
+        classe: "humain"
+    },
+    maison: {
+        singulier: "ndako",
+        pluriel: "bandako",
+        classe: "objet"
+    },
+    pain: {
+        singulier: "mampa",
+        pluriel: "mampa",
+        classe: "objet"
+    },
+    pomme: {
+        singulier: "pome",
+        pluriel: "pome",
+        classe: "objet"
+    }
+};
+
+/********************************************************
+ 2. RACINES VERBALES LINGALA
+********************************************************/
+const racinesVerbalesLingala = {
+    voir: "mona",
+    vois: "mona",
+    voit: "mona",
+    vu: "mona",
+    voient: "mona",
+    voyons: "mona",
+    voyez: "mona",
+    voient: "mona",
+    verra: "mona",
+    verront: "mona",
+
+
+    suis: "zala",
+    est: "zala",
+
+    manger: "lia",
+    mange: "lia",
+    mangé: "lia",
+    mangent: "lia",
+    mangeons: "lia",
+    mangez: "lia",
+    mangerai: "lia",
+    mangeras: "lia",
+    mangera: "lia",
+    mangerons: "lia",
+    mangerez: "lia",
+    mangeront: "lia",
+
+    aller: "kende",
+    vais: "kende",
+    va: "kende",
+    partir: "kende",
+
+    venir: "ya",
+    vient: "ya",
+
+    savoir: "yeba",
+    sais: "yeba",
+
+    penser: "kanisa",
+    pense: "kanisa",
+
+    sommes: "zala",
+    êtes: "zala",
+    sont: "zala",
+    es: "zala",
+
+    parler: "loba",
+    parle: "loba",
+
+    faire: "sala",
+    fait: "sala",
+
+    prendre: "zwa",
+    prend: "zwa",
+
+    donner: "pesa",
+    donne: "pesa",
+
+    aimer: "linga",
+    aime: "linga",
+
+    irai: "kende",
+iras: "kende",
+ira: "kende",
+irons: "kende",
+irez: "kende",
+iront: "kende",
+
+vas: "kende",
+allons: "kende",
+allez: "kende",
+vont: "kende",
+
+verrai: "mona",
+verras: "mona",
+verra: "mona",
+verrons: "mona",
+verrez: "mona",
+verront: "mona"
+
+};
+
+/********************************************************
+ 3. PREFIXES SUJET LINGALA
+********************************************************/
+const prefixesSujetLingala = {
+    "je": "na",
+    "j'": "na",
+    "tu": "o",
+    "il": "a",
+    "elle": "a",
+    "nous": "to",
+    "vous": "bo",
+    "ils": "ba",
+    "elles": "ba"
+};
+
+/********************************************************
+ 4. DETECTION ASPECT
+********************************************************/
+function detectAspectLingala(phrase, analyse) {
+
+    const tokens = analyse.tokens;
+
+    const aspectCompose =
+        detectAspectComposeAvance(analyse);
+
+    if(aspectCompose) {
+        return aspectCompose;
+    }
+
+    if(phrase.includes("en train de")) {
+        return "progressif";
+    }
+
+    if(
+        tokens.includes("souvent") ||
+        tokens.includes("toujours") ||
+        phrase.includes("chaque jour")
+    ) {
+        return "habituel";
+    }
+
+    if(
+        analyse.temps.includes("futur") ||
+        phrase.includes("vais") ||
+        phrase.includes("va ") ||
+        phrase.includes("vont")
+    ) {
+        return "futur";
+    }
+
+    return "simple";
+}
+
+/********************************************************
+ 5. DETECTION FOCUS
+ Exemple : moi je vois / moi-même je vois
+********************************************************/
+function detectFocusLingala(tokens) {
+
+    return (
+        tokens.includes("moi") ||
+        tokens.includes("toi") ||
+        tokens.includes("lui") ||
+        tokens.includes("elle-même")
+    );
+}
+
+/********************************************************
+ 6. TROUVER RACINE VERBALE
+********************************************************/
+function trouverRacineLingala(verbeFrancais) {
+
+    if(!verbeFrancais) return null;
+
+    const morceaux = verbeFrancais.split(" ");
+
+    for(let mot of morceaux) {
+        if(racinesVerbalesLingala[mot]) {
+            return racinesVerbalesLingala[mot];
+        }
+    }
+
+    return racinesVerbalesLingala[verbeFrancais] || null;
+}
+
+/********************************************************
+ DETECTION VERBE SEMANTIQUE REEL
+********************************************************/
+function normaliserVerbeLingala(analyse) {
+
+    const tokens = analyse.tokens;
+
+    const indexTrain = tokens.indexOf("train");
+
+    if(indexTrain !== -1) {
+        for(let i = indexTrain; i < tokens.length; i++) {
+            if(
+                tokens[i].endsWith("er") ||
+                tokens[i].endsWith("ir") ||
+                tokens[i].endsWith("re")
+            ) {
+                return tokens[i];
+            }
+        }
+    }
+
+    if(analyse.groupeVerbal && analyse.groupeVerbal.participeOuInfinitif) {
+        return analyse.groupeVerbal.participeOuInfinitif;
+    }
+
+    if(
+        analyse.groupeVerbal &&
+        analyse.groupeVerbal.participeOuInfinitif
+    ) {
+        return analyse.groupeVerbal.participeOuInfinitif;
+    }
+
+    if(analyse.verbe) {
+        const morceaux = analyse.verbe.split(" ");
+
+        for(const mot of morceaux) {
+            if(racinesVerbalesLingala[mot]) {
+                return mot;
+            }
+        }
+    }
+
+    return null;
+}
+
+function tokensContiennent(tokens, suite) {
+
+    return suite.every(m => tokens.includes(m));
+}
+
+/********************************************************
+ SUJET LINGALA NATUREL — VERSION STABLE
+********************************************************/
+function trouverSujetLingalaNaturel(analyse) {
+
+    const sujet = analyse.svc.sujet || [];
+    const texteSujet = sujet.join(" ");
+
+    if(sujet.includes("tu")) return "tu";
+
+    if(
+    texteSujet.includes("mes enfants") ||
+    texteSujet.includes("bana na ngai")
+) {
+    return "ils";
+}
+    if(texteSujet.includes("les enfants")) return "ils";
+    if(texteSujet.includes("cet enfant")) return "il";
+    if(texteSujet.includes("mon enfant")) return "il";
+
+    if(sujet.includes("je") || sujet.includes("j'")) return "je";
+    if(sujet.includes("tu")) return "tu";
+    if(sujet.includes("nous")) return "nous";
+    if(sujet.includes("vous")) return "vous";
+    if(sujet.includes("ils") || sujet.includes("elles")) return "ils";
+
+    if(tokensContiennent(analyse.tokens, ["mes","enfants"])) {
+    return "ils";
+}
+
+    return "il";
+}
+
+/********************************************************
+ 7. GENERER VERBE SELON ASPECT
+********************************************************/
+function genererVerbeAspectLingala(sujet, verbe, aspect) {
+
+    const prefixe = prefixesSujetLingala[sujet] || "";
+    const racine = trouverRacineLingala(verbe);
+
+    if(!racine) {
+        return null;
+    }
+
+    /*****************************************
+     VERBE ÊTRE / ZALA
+    *****************************************/
+    if(racine === "zala") {
+
+        if(aspect === "simple") {
+            return auxiliaireProgressif[sujet];
+        }
+
+        if(aspect === "habituel") {
+            return prefixe + "zalaka";
+        }
+
+        if(aspect === "accompli") {
+            return prefixe + "zalaki";
+        }
+
+        if(aspect === "futur") {
+            return prefixe + "kozala";
+        }
+    }
+
+    /*****************************************
+     PROGRESSIF
+    *****************************************/
+    if(aspect === "progressif") {
+        return auxiliaireProgressif[sujet] + " ko" + racine;
+    }
+
+    /*****************************************
+     HABITUEL
+    *****************************************/
+    if(aspect === "habituel") {
+
+        let base = racine;
+
+        if(base.endsWith("a")) {
+            base = base.slice(0, -1);
+        }
+
+        return prefixe + base + "aka";
+    }
+
+    /*****************************************
+     ACCOMPLI
+    *****************************************/
+    if(aspect === "accompli") {
+
+        if(racine === "lia") return prefixe + "liaki";
+        if(racine === "mona") return prefixe + "moni";
+        if(racine === "kende") return prefixe + "kendeki";
+
+        if(racine.endsWith("a")) {
+            return prefixe + racine.slice(0, -1) + "aki";
+        }
+
+        return prefixe + racine + "aki";
+
+    }
+
+    if(aspect === "anterieur_passe") {
+        return prefixe + racine + "aki kala";
+    }
+
+    if(aspect === "anterieur_futur") {
+        return prefixe + "kozala na " + racine + "aki";
+    }
+
+    if(aspect === "conditionnel_passe") {
+        return prefixe + "lingaki " + racine + "a";
+    }
+
+    /*****************************************
+     FUTUR
+    *****************************************/
+    if(aspect === "futur") {
+        return prefixe + "ko" + racine;
+    }
+
+    /*****************************************
+     SIMPLE
+    *****************************************/
+    if(aspect === "simple") {
+
+        if(racine === "lia") {
+            return auxiliaireProgressif[sujet] + " kolia";
+        }
+
+        if(racine === "mona") {
+            return prefixe + "moni";
+        }
+
+        return prefixe + racine;
+    }
+
+    return prefixe + racine;
+}
+
+/********************************************************
+ 7.BIS EVITE DE METTRE LES TEMPS COMPOSES A ACCOMPLI
+ DISTINGUE LE PASSE COMPOSE, PLUS QUE PARFAIT
+ FUTUR ANTERIEUR
+********************************************************/
+function detectAspectComposeAvance(analyse) {
+
+    if(!analyse || !analyse.temps) {
+        return null;
+    }
+
+    if(analyse.temps === "passé composé") {
+        return "accompli";
+    }
+
+    if(analyse.temps === "plus-que-parfait") {
+        return "anterieur_passe";
+    }
+
+    if(analyse.temps === "futur antérieur") {
+        return "anterieur_futur";
+    }
+
+    if(analyse.temps === "conditionnel passé") {
+        return "conditionnel_passe";
+    }
+
+    return null;
+}
+
+/********************************************************
+ 8. TRADUIRE NOM AVEC CLASSE
+********************************************************/
+function traduireNomClasseLingala(mot) {
+
+    const noms = {
+        pain: "mampa",
+        pomme: "pome",
+        riz: "loso",
+        maison: "ndako",
+        enfant: "mwana",
+        enfants: "bana",
+        eau: "mayi",
+        marché: "zando",
+école: "eteyelo",
+travail: "mosala",
+ami: "moninga",
+voiture: "motuka",
+route: "nzela",
+village: "mboka",
+avion: "mpɛpɔ"
+    };
+
+    if(noms[mot]) return noms[mot];
+
+    if(classesNominalesLingala[mot]) {
+
+        if(mot.endsWith("s")) {
+            return classesNominalesLingala[mot].pluriel;
+        }
+
+        return classesNominalesLingala[mot].singulier;
+    }
+
+    return mot;
+}
+
+/********************************************************
+ 9. DEMONSTRATIFS
+ ce / cet / cette / ces
+********************************************************/
+function transformerDemonstratifLingala(tokens) {
+
+    let resultat = [];
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+        const suivant = tokens[i + 1];
+
+        if(
+            ["ce", "cet", "cette", "ces"].includes(mot)
+        ) {
+
+            if(suivant) {
+                resultat.push(
+                    traduireNomClasseLingala(suivant)
+                );
+                resultat.push("oyo");
+                i++;
+                continue;
+            }
+        }
+
+        resultat.push(mot);
+    }
+
+    return resultat;
+}
+
+/********************************************************
+ 10. POSSESSIFS
+ mon / ma / mes → na ngai
+ ton / ta / tes → na yo
+********************************************************/
+function transformerPossessifLingala(tokens) {
+
+    let resultat = [];
+
+    const possessifs = {
+        mon: "na ngai",
+        ma: "na ngai",
+        mes: "na ngai",
+        ton: "na yo",
+        ta: "na yo",
+        tes: "na yo",
+        notre: "na biso",
+        nos: "na biso"
+    };
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+        const suivant = tokens[i + 1];
+
+        if(possessifs[mot] && suivant) {
+
+            resultat.push(
+                traduireNomClasseLingala(suivant)
+            );
+
+            resultat.push(possessifs[mot]);
+
+            i++;
+            continue;
+        }
+
+        resultat.push(mot);
+    }
+
+    return resultat;
+}
+
+/********************************************************
+ 11. QUESTIONS NATURELLES
+********************************************************/
+function transformerQuestionLingala(phrase, analyse) {
+
+    const tokens = analyse.tokens;
+
+    if(
+        tokens.includes("où") &&
+        tokens.includes("sont") &&
+        tokens.includes("mes") &&
+        tokens.includes("enfants")
+    ) {
+        return "bana na ngai bazali wapi";
+    }
+
+    if(
+        tokens.includes("que") &&
+        tokens.includes("mange") &&
+        tokens.includes("cet") &&
+        tokens.includes("enfant")
+    ) {
+        return "mwana oyo azali kolia nini";
+    }
+
+    if(
+        tokens.includes("qui") &&
+        tokens.includes("est") &&
+        tokens.includes("maison")
+    ) {
+        return "nani azali na ndako";
+    }
+
+    if(
+        tokens.includes("pourquoi") &&
+        tokens.includes("tu") &&
+        tokens.includes("manges")
+    ) {
+        return "mpo na nini ozali kolia te";
+    }
+
+    return null;
+}
+
+/********************************************************
+ 12. NUANCE : JE VAIS MANGER
+ futur proche OU déplacement
+********************************************************/
+function detectNuanceAllerManger(phrase) {
+
+    if(
+        phrase.includes("là-bas") ||
+        phrase.includes("chez") ||
+        phrase.includes("au marché") ||
+        phrase.includes("à la maison")
+    ) {
+        return "deplacement";
+    }
+
+    return "futur_proche";
+}
+
+/********************************************************
+ RECONSTRUCTION PHRASE LINGALA
+********************************************************/
+function reconstruirePhraseLingala(tokens) {
+
+    return tokens
+        .filter(t => t && t.trim() !== "")
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+/********************************************************
+ DETECTION MOTS INCONNUS
+********************************************************/
+function detectMotsInconnus(tokens) {
+
+    return tokens.filter(t => {
+
+        return (
+            !pronomsGlobaux.personnels.includes(t) &&
+            !verbesConnus.includes(t) &&
+            !nomsConnus.includes(t) &&
+            !adjectifsConnus.includes(t) &&
+            !adverbesConnus.includes(t) &&
+            !prepositionsConnues.includes(t) &&
+            !motsNonVerbaux.includes(t) &&
+            !classesNominalesLingala[t] &&
+            !racinesVerbalesLingala[t]
+        );
+    });
+}
+
+/********************************************************
+ DETECTION SUJET NOMINAL LINGALA — VERSION GENERIQUE
+********************************************************/
+function detectSujetNominalLingala(tokens) {
+
+    /****************************************
+     CAS DEJA STABILISES
+    ****************************************/
+    if(tokens.includes("mes") && tokens.includes("enfants")) {
+        return "bana na ngai";
+    }
+
+    if(tokens.includes("les") && tokens.includes("enfants")) {
+        return "bana";
+    }
+
+    if(tokens.includes("mon") && tokens.includes("enfant")) {
+        return "mwana na ngai";
+    }
+
+    if(tokens.includes("cet") && tokens.includes("enfant")) {
+        return "mwana oyo";
+    }
+
+    /****************************************
+     CAS GENERIQUE :
+     le médecin soigne...
+     le client achète...
+    ****************************************/
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+
+        if(
+            mot === "le" ||
+            mot === "la" ||
+            mot === "un" ||
+            mot === "une"
+        ) {
+
+            const nom = tokens[i + 1];
+
+            if(nom && nomsConnus.includes(nom)) {
+                return traduireNomClasseLingala(nom);
+            }
+        }
+    }
+
+    return null;
+}
+
+/********************************************************
+ 13. GENERATEUR LINGALA NATIF
+********************************************************/
+function genererLingalaNatif(phrase) {
+
+    const analyse = analyseComplete(phrase);
+    const tokensOriginaux = analyse.tokens;
+
+
+
+    /************************************************
+     QUESTIONS
+    ************************************************/
+    if(analyse.typePhrase === "interrogative") {
+
+        const question =
+            transformerQuestionLingala(phrase, analyse);
+
+        if(question) {
+            return {
+                phraseOriginale: phrase,
+                mode: "question",
+                traduction: question
+            };
+        }
+    }
+
+
+
+    /************************************************
+     POSSESSIFS + DEMONSTRATIFS
+    ************************************************/
+    let tokens =
+        transformerPossessifLingala(tokensOriginaux);
+
+    tokens =
+        transformerDemonstratifLingala(tokens);
+
+    /************************************************
+     SUJET / VERBE / ASPECT
+    ************************************************/
+    const sujet = trouverSujetLingalaNaturel(analyse);
+
+    const aspect =
+        detectAspectLingala(phrase, analyse);
+
+    const verbeNormal =
+    normaliserVerbeLingala(analyse);
+
+    let verbeLingala =
+        genererVerbeAspectLingala(
+            sujet,
+            verbeNormal,
+            aspect
+        );
+
+
+    /************************************************
+     CAS SPECIAL : JE VAIS MANGER
+    ************************************************/
+    if(
+    analyse.svc.verbe &&
+    analyse.svc.verbe.includes("manger")
+) {
+
+    const prefixeSujet =
+        prefixesSujetLingala[sujet];
+
+    const nuance =
+        detectNuanceAllerManger(phrase);
+
+    if(nuance === "futur_proche") {
+        verbeLingala =
+            prefixeSujet + "kolia";
+    }
+
+    if(nuance === "deplacement") {
+        verbeLingala =
+            prefixeSujet +
+            "kokende kolia";
+    }
+}
+
+    if(
+    analyse.svc.verbe &&
+    analyse.svc.verbe.includes("manger") &&
+    analyse.negations.negatif
+) {
+        verbeLingala = "nazali kokende kolia";
+    }
+
+    /************************************************
+     COMPLEMENT
+    ************************************************/
+    let complement = [];
+
+    if(
+        analyse.svc &&
+        analyse.svc.verbe
+    ) {
+
+        const morceauxVerbe =
+            analyse.svc.verbe.split(" ");
+
+        const premierMotVerbe =
+            morceauxVerbe[0];
+
+        const indexVerbe =
+            tokens.indexOf(premierMotVerbe);
+
+        if(indexVerbe !== -1) {
+
+            complement =
+                tokens.slice(
+                    indexVerbe +
+                    morceauxVerbe.length
+                );
+        }
+    }
+    /************************************************
+     FOCUS
+    ************************************************/
+    /*****************************************
+ SUJET NOMINAL EXPLICITE
+*****************************************/
+let sujetNominal =
+    detectSujetNominalLingala(tokensOriginaux);
+
+/*****************************************
+ CONSTRUCTION RESULTAT
+*****************************************/
+let resultat = [];
+
+if(detectFocusLingala(tokensOriginaux)) {
+    resultat.push("ngai");
+    resultat.push("nde");
+}
+
+/*****************************************
+ AJOUT SUJET NOMINAL
+ seulement sujet nominal réel
+*****************************************/
+const sujetDejaDansVerbe = [
+
+    "je",
+    "tu",
+    "nous",
+    "vous"
+];
+
+if(
+    sujetNominal &&
+    !sujetDejaDansVerbe.includes(sujet)
+) {
+
+    // éviter duplication
+    if(!resultat.includes(sujetNominal)) {
+        resultat.push(sujetNominal);
+    }
+}
+
+/*****************************************
+ AJOUT VERBE
+*****************************************/
+if(verbeLingala) {
+    resultat.push(verbeLingala);
+}
+
+if(!verbeLingala) {
+
+    return {
+        phraseOriginale: phrase,
+        traduction: reconstruirePhraseLingala(
+            nettoyerComplementLingala(
+                tokens,
+                analyse,
+                aspect
+            )
+        )
+    };
+}
+
+complement =
+    traduireArticleIndefiniLingala(complement);
+
+/*****************************************
+ COMPLEMENT
+*****************************************/
+const complementNettoye =
+    nettoyerComplementLingala(
+        complement,
+        analyse,
+        aspect
+    );
+
+resultat.push(...complementNettoye);
+
+/*****************************************
+ NEGATION
+*****************************************/
+if(analyse.negations.negatif) {
+    resultat.push("te");
+}
+
+/*****************************************
+ FINAL
+*****************************************/
+const traduction =
+    reconstruirePhraseLingala(resultat);
+
+return {
+    phraseOriginale: phrase,
+    aspect,
+    analyse,
+    traduction,
+    motsInconnus: detectMotsInconnus(analyse.tokens)
+};
+}
+
+
+/********************************************************
+NETTOYEUR SYNTAXIQUE LINGALA — VERSION STABLE
+********************************************************/
+function nettoyerComplementLingala(complement, analyse, aspect) {
+
+    if(!complement) return [];
+
+    let resultat = [...complement];
+
+    const motsASupprimer = [
+        "le","la","les","du","de","des",
+        //"un","une",
+        "mon","ma","mes","ton","ta","tes",
+        "ne","pas",
+        "en","train",
+        "manger","voir","aller","être","avoir",
+        "mangé","vu","allé","venu",
+        "mange","manges","mangent",
+        "vois","voit","voient",
+        "vais","vas","va","vont",
+        "suis","es","est","sommes","êtes","sont",
+        "cet","cette","ce",
+        "irons","verront","vas"
+    ];
+
+    resultat = resultat.filter(t => !motsASupprimer.includes(t));
+
+    resultat = resultat.filter(t =>
+        t !== "souvent" &&
+        t !== "toujours"
+    );
+
+    resultat = resultat.map(t => {
+        if(t === "aujourdhui") return "lelo";
+        if(t === "nous") return "biso";
+        return dictionnaireContextuelLingala[t] || t;
+    });
+
+    resultat = resultat.map(t => traduireNomClasseLingala(t));
+
+    return [...new Set(resultat)];
+}
+
+/********************************************************
+    GERE LES PARAGRAPHES LINGALA NATIF
+********************************************************/
+function genererParagrapheLingalaNatif(texte) {
+
+    const phrases = texte
+        .match(/[^.!?]+[.!?]?/g)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+    let traductions = [];
+
+    for(const phraseOriginale of phrases) {
+
+        const phrase = phraseOriginale.trim();
+
+        const morceauxPhrase =
+            phrase.split(/\b(et|mais)\b/);
+
+        let morceaux = [];
+
+        for(let i = 0; i < morceauxPhrase.length; i++) {
+
+            const bloc = morceauxPhrase[i].trim();
+
+            if(!bloc) continue;
+
+            if(bloc === "et") {
+                morceaux.push("mpe");
+                continue;
+            }
+
+            if(bloc === "mais") {
+                morceaux.push("kasi");
+                continue;
+            }
+
+            const resultat =
+                genererLingalaNatif(bloc);
+
+            if(
+                resultat &&
+                resultat.traduction
+            ) {
+
+                morceaux.push(
+                    resultat.traduction
+                );
+            }
+        }
+
+        traductions.push(
+            reconstruirePhraseLingala(morceaux)
+        );
+    }
+
+    return traductions.join(". ");
+}
+
+function normaliserSujetFr(sujet) {
+
+    if(sujet === "j'") return "je";
+
+    return sujet;
+}
+
+function traduireArticleIndefiniLingala(tokens) {
+
+    let resultat = [];
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        if(tokens[i] === "un" || tokens[i] === "une") {
+            const nom = tokens[i + 1];
+
+            if(nom) {
+                resultat.push(traduireNomClasseLingala(nom));
+                resultat.push("moko");
+                i++;
+                continue;
+            }
+        }
+
+        resultat.push(tokens[i]);
+    }
+
+    return resultat;
+}
+
+/********************************************************
+ CHARGER LES DOMAINES DANS LE MOTEUR
+********************************************************/
+function chargerLexiqueDomaines() {
+
+    for(const domaine in lexiqueDomaines) {
+
+        const bloc = lexiqueDomaines[domaine];
+
+        if(bloc.noms) {
+            for(const mot in bloc.noms) {
+                if(!nomsConnus.includes(mot)) {
+                    nomsConnus.push(mot);
+                }
+            }
+        }
+
+        if(bloc.adjectifs) {
+            for(const mot in bloc.adjectifs) {
+                if(!adjectifsConnus.includes(mot)) {
+                    adjectifsConnus.push(mot);
+                }
+            }
+        }
+
+        if(bloc.verbes) {
+            for(const verbe in bloc.verbes) {
+                if(!verbesConnus.includes(verbe)) {
+                    verbesConnus.push(verbe);
+                }
+
+                racinesVerbalesLingala[verbe] = bloc.verbes[verbe];
+            }
+        }
+    }
+}
+
+function detectNombre(mot) {
+    return !isNaN(Number(mot));
+}
+
+function traduireNombreLingala(nombre) {
+    return chiffresLingala[nombre] || String(nombre);
+}
+
+function calculerStatistique(type, valeurs) {
+
+    if(type === "somme") {
+        return valeurs.reduce((a, b) => a + b, 0);
+    }
+
+    if(type === "moyenne") {
+        return valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+    }
+
+    if(type === "minimum") {
+        return Math.min(...valeurs);
+    }
+
+    if(type === "maximum") {
+        return Math.max(...valeurs);
+    }
+
+    return null;
+}
+
+
+/********************************************************
+ AJOUT SECURISE DANS TABLEAU
+********************************************************/
+function ajouterSiAbsent(tableau, mot) {
+    if(mot && !tableau.includes(mot)) {
+        tableau.push(mot);
+    }
+}
+
+
+/********************************************************
+ GENERATION COMPLETE DES FORMES FRANCAISES
+ 1er groupe
+ 2e groupe
+ 3e groupe partiel
+ + participes passés
+********************************************************/
+function genererFormesVerbeFrancais(infinitif) {
+
+    let formes = [infinitif];
+
+    /************************************************
+     1ER GROUPE
+     réserver
+    ************************************************/
+    if(infinitif.endsWith("er")) {
+
+        const base = infinitif.slice(0, -2);
+
+        /****************************************
+         PRESENT
+        ****************************************/
+        formes.push(base + "e");
+        formes.push(base + "es");
+        formes.push(base + "ons");
+        formes.push(base + "ez");
+        formes.push(base + "ent");
+
+        /****************************************
+         FUTUR
+        ****************************************/
+        formes.push(base + "erai");
+        formes.push(base + "eras");
+        formes.push(base + "era");
+        formes.push(base + "erons");
+        formes.push(base + "erez");
+        formes.push(base + "eront");
+
+        /****************************************
+         IMPARFAIT
+        ****************************************/
+        formes.push(base + "ais");
+        formes.push(base + "ait");
+        formes.push(base + "ions");
+        formes.push(base + "iez");
+        formes.push(base + "aient");
+
+        /****************************************
+         CONDITIONNEL
+        ****************************************/
+        formes.push(base + "erais");
+        formes.push(base + "erait");
+        formes.push(base + "erions");
+        formes.push(base + "eriez");
+        formes.push(base + "eraient");
+
+        /****************************************
+         PARTICIPE PASSE
+        ****************************************/
+        formes.push(base + "é");
+    }
+
+    /************************************************
+     2E GROUPE
+     finir
+    ************************************************/
+    else if(infinitif.endsWith("ir")) {
+
+        const base = infinitif.slice(0, -2);
+
+        formes.push(base + "is");
+        formes.push(base + "it");
+        formes.push(base + "issons");
+        formes.push(base + "issez");
+        formes.push(base + "issent");
+
+        formes.push(base + "irai");
+        formes.push(base + "iras");
+        formes.push(base + "ira");
+        formes.push(base + "irons");
+        formes.push(base + "irez");
+        formes.push(base + "iront");
+
+        formes.push(base + "issais");
+        formes.push(base + "issait");
+
+        formes.push(base + "irais");
+        formes.push(base + "irait");
+
+        formes.push(base + "i");
+    }
+
+    /************************************************
+     3E GROUPE PARTIEL
+     vendre
+    ************************************************/
+    else if(infinitif.endsWith("re")) {
+
+        const base = infinitif.slice(0, -2);
+
+        formes.push(base + "s");
+        formes.push(base);
+        formes.push(base + "ons");
+        formes.push(base + "ez");
+        formes.push(base + "ent");
+
+        formes.push(base + "rai");
+        formes.push(base + "ras");
+        formes.push(base + "ra");
+
+        formes.push(base + "ais");
+        formes.push(base + "ait");
+
+        formes.push(base + "rais");
+        formes.push(base + "rait");
+
+        /****************************************
+         PARTICIPE PASSE
+        ****************************************/
+        formes.push(base + "u");
+    }
+
+    /************************************************
+     SUPPRIMER DOUBLONS
+    ************************************************/
+    return [...new Set(formes)];
+}
+
+
+/********************************************************
+ NORMALISATION LEXIQUE -> MOTEUR
+ Cette fonction injecte le lexique dans :
+ - verbesConnus
+ - nomsConnus
+ - adjectifsConnus
+ - racinesVerbalesLingala
+********************************************************/
+/********************************************************
+ CHARGER LEXIQUE DANS LE MOTEUR — VERSION FINALE
+********************************************************/
+function chargerLexiqueDansMoteur() {
+
+    for(const domaine in lexiqueDomaines) {
+
+        const bloc = lexiqueDomaines[domaine];
+
+        /****************************************
+         NOMS
+        ****************************************/
+        if(bloc.noms) {
+
+            for(const mot in bloc.noms) {
+
+                ajouterSiAbsent(nomsConnus, mot);
+
+                if(!classesNominalesLingala[mot]) {
+
+                    classesNominalesLingala[mot] = {
+                        singulier: bloc.noms[mot],
+                        pluriel: bloc.noms[mot],
+                        classe: "objet"
+                    };
+                }
+            }
+        }
+
+        /****************************************
+         ADJECTIFS
+        ****************************************/
+        if(bloc.adjectifs) {
+
+            for(const mot in bloc.adjectifs) {
+                ajouterSiAbsent(adjectifsConnus, mot);
+            }
+        }
+
+        /****************************************
+         VERBES
+        ****************************************/
+        if(bloc.verbes) {
+
+            for(const infinitif in bloc.verbes) {
+
+                const racineLingala = bloc.verbes[infinitif];
+
+                ajouterSiAbsent(infinitifsConnus, infinitif);
+
+                const formes =
+                    genererFormesVerbeFrancais(infinitif);
+
+                formes.forEach(forme => {
+
+                    ajouterSiAbsent(verbesConnus, forme);
+
+                    /********************************
+                     IMPORTANT :
+                     chaque forme française pointe
+                     vers la même racine lingala
+                    ********************************/
+                    racinesVerbalesLingala[forme] =
+                        racineLingala;
+                });
+            }
+        }
+    }
+}
+
+/********************************************************
+ 00. ANALYSE COMPLETE
+********************************************************/
+function analyseComplete(phrase) {
+
+    const tokens = tokenizer(phrase);
+
+    return {
+
+        tokens,
+
+        articles: detectArticles(tokens),
+
+        pronoms: detectPronoms(tokens),
+
+        categories: detectCategories(tokens),
+
+        negations: detectNegation(tokens),
+        verbe: detectVerbe(tokens),
+
+        groupeVerbal: transformerGroupeVerbal(detectSVC(tokens)),
+        infinitifs: detectInfinitif(tokens),
+        prepositions: analyserPreposition(tokens),
+
+        interrogationInversee:
+    	detectInterrogationInversee(tokens),
+
+        temps: detectTempsVerbal(tokens),
+
+        relative: detectRelative(tokens),
+
+        composee: isPhraseComposee(tokens),
+
+        typePhrase:
+            detectTypePhrase(phrase, tokens),
+
+        propositionPrincipale:
+            detectPropositionPrincipale(tokens),
+
+        propositionSecondaire:
+            detectPropositionSecondaire(tokens),
+
+        svc: detectSVC(tokens),
+
+        cod: detectCOD(tokens),
+
+        coi: detectCOI(tokens),
+
+        attribut: detectAttributSujet(tokens),
+
+        expressionFixe: detectExpressionFixe(tokens),
+
+        genreNombre:
+            tokens.map(t => detectGenreNombre(t)),
+
+        accordSujetVerbe:
+            verifierAccordSujetVerbe(
+                detectSVC(tokens).sujet[0],
+                detectSVC(tokens).verbe || ""
+            ),
+
+        semantique: analyseSemantique(tokens),
+
+        ponctuation: detectPonctuation(phrase)
+    };
+}
+
+/********************************************************
+ EXEMPLE
+********************************************************/
+
+
+
+//const phrase = "Les enfants ont mangé une pomme parce que ils avaient faim.";
+//const phrase = "J'aurais du pain";
+//const phrase = "Je ne vais pas manger";
+//const phrase = "Qui es tu?";
+//const phrase = "J'avais mangé";
+
+//const phrase = "tu auraiS mangé";
+//const phrase = "Il mangea";
+//const phrase = "Que sois je";
+//const phrase = "Que j'aie mangé";
+//const phrase = "En mangeant du riz";
+//const phrase = "mangeant"; 
+
+chargerLexiqueDansMoteur();
+
+const phrase = "je manger"; 
+
+/*console.log(genererLingala("je manger"));
+
+
+console.log("==========CONJUGAISON===========");
+
+console.log(conjuguer("manger", "present", "je"));
+// mange
+
+console.log(conjuguer("manger", "futur", "vous"));
+// mangerons
+
+console.log("==========FIN CONJUGAISON===========");
+
+
+console.log("==========FRANCAIS->LINGALA===========");
+
+
+
+
+//======================MODULE 7===========================
+
+
+console.log(genererLingalaNatif("je suis en train de manger"));
+// nazali kolia
+
+console.log(genererLingalaNatif("je vois souvent les enfants"));
+// namonaka bana
+
+console.log(genererLingalaNatif("j'ai mangé une pomme"));
+// naliaki pome
+
+console.log(genererLingalaNatif("je vais manger"));
+// nakolia
+
+console.log(genererLingalaNatif("je vais manger là-bas"));
+// nakokende kolia
+
+console.log(genererLingalaNatif("je vois cet enfant"));
+// namoni mwana oyo
+
+console.log(genererLingalaNatif("je vois mes enfants"));
+// namoni bana na ngai
+
+console.log(genererLingalaNatif("je ne suis pas en train de manger"));
+// nazali kolia te
+
+//===============FIN MODULE 7======================== */
+
+//console.log(analyseComplete(phrase));
+
+
+//Traduction de notre moteur linguistique
+
+//Paragraphe:
+/*console.log(genererParagrapheLingalaNatif("Je suis en train de manger du pain avec mes enfants. Nous sommes dans la maison. Mes enfants mangent souvent du riz. Je vois mon enfant ici."));*/
+
+//PARAGRAPHE 1 — PROGRESSIF + POSSESSIF
+console.log(genererParagrapheLingalaNatif("Nous sommes dans la maison. Je suis en train de manger du pain avec mes enfants. Je vois mon enfant ici. Mes enfants mangent souvent du riz."));
+
+//PARAGRAPHE 2 — NÉGATION
+console.log(genererParagrapheLingalaNatif("Je ne vais pas manger. Mes enfants ne mangent pas. Nous ne sommes pas dans la maison. Je ne vois pas cet enfant."));
+
+//PARAGRAPHE 3 — FUTUR SIMPLE
+console.log(genererParagrapheLingalaNatif("Je mangerai une pomme demain. Nous irons dans la maison. Mes enfants verront le pain. Tu mangeras du riz."));
+
+//PARAGRAPHE 4 — PASSÉ COMPOSÉ
+console.log(genererParagrapheLingalaNatif("J'ai mangé une pomme. Mes enfants ont mangé du riz. Nous avons vu une maison. Tu as mangé du pain."));
+
+//PARAGRAPHE 5 — HABITUEL
+console.log(genererParagrapheLingalaNatif("Je mange souvent du pain. Mes enfants mangent toujours du riz. Nous voyons souvent cet enfant. Tu vas souvent dans la maison."));
+
+//PARAGRAPHE 6 — ATTRIBUT + ÊTRE
+console.log(genererParagrapheLingalaNatif("Je suis dans la maison. Nous sommes ici. Mes enfants sont là-bas. Cet enfant est avec nous."));
+
+//PARAGRAPHE 7 — PHRASES COMPOSÉES
+console.log(genererParagrapheLingalaNatif("Je mange du pain et je vois mes enfants. Nous sommes dans la maison mais les enfants mangent du riz. Tu vois cet enfant et il mange une pomme."));
+
+//PARAGRAPHE 8 — QUESTIONS
+console.log(genererParagrapheLingalaNatif("Où sont mes enfants ? Que mange cet enfant ? Qui est dans la maison ? Pourquoi tu ne manges pas ?"));
+
+//PARAGRAPHE 9 — TEMPS MÉLANGÉS
+console.log(genererParagrapheLingalaNatif("J'avais mangé du pain. Nous avions vu une maison. Je mangerai du riz demain. Mes enfants vont manger ici."));
+
+//PARAGRAPHE 10 — TEST COMPLET CONTEXTUEL
+console.log(genererParagrapheLingalaNatif("Je suis en train de manger du pain avec mon enfant. Nous sommes dans la maison aujourd'hui. Mes enfants mangent souvent du riz ici. Je vais voir cet enfant demain. Ils ne vont pas manger là-bas."));
+
+//MODULE 7 — MOTEUR NATIF
+//Progressif:
+
+console.log(genererLingalaNatif("je suis en train de manger"));
+console.log(genererLingalaNatif("tu es en train de manger"));
+console.log(genererLingalaNatif("ils sont en train de manger"));
+
+//Progressif négatif:
+console.log(genererLingalaNatif("je ne suis pas en train de manger"));
+
+
+console.log("*********************************");
+console.log("=============LEXIQUES============");
+
+
+//console.log(genererLingalaNatif("Je réserve un hôtel"));
+console.log(genererLingalaNatif("Je réserve un hôtel"));
+console.log(genererLingalaNatif("Je réserverai un hôtel"));
+console.log(genererLingalaNatif("J'ai réservé un hôtel"));
+console.log(genererLingalaNatif("Je télécharge un fichier"));
+console.log(genererLingalaNatif("Je vends un ordinateur"));
+
+console.log(genererLingalaNatif("Le médecin soigne un malade"));
+console.log(genererParagrapheLingalaNatif("Je réserve un hôtel. Je télécharge un fichier. Le médecin soigne un malade. Je vends un ordinateur."));
+
+</script>
+</body>
+</html>
