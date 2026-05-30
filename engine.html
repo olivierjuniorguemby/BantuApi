@@ -66,13 +66,21 @@ const lexiqueDomaines = {
             médicament: "nkisi",
             hôpital: "lopitalo",
             douleur: "pasi",
-            fièvre: "fievre"
+            fièvre: "fievre",
+            laver: "sukola",
+            réveiller: "lamuka",
+            reposer: "pema",
         },
         verbes: {
             soigner: "sunga",
             guérir: "bika",
             souffrir: "yoka pasi",
-            consulter: "mona monganga"
+            consulter: "mona monganga",
+
+            laver:"sukola",
+            réveiller:"lamuka",
+            reposer:"pema"
+
         },
         adjectifs: {
             malade: "ya maladi",
@@ -112,7 +120,8 @@ const lexiqueDomaines = {
             apprendre: "yekola",
             enseigner: "lakisa",
             lire: "tanga",
-            écrire: "koma"
+            écrire: "koma",
+            appeler: "benga",
         }
     },
 
@@ -671,14 +680,7 @@ function detectConnecteurs(tokens) {
 ********************************************************/
 function detectTempsVerbal(tokens) {
 
-    const participe = mot => {
-
-        return (
-            mot.endsWith("é") ||
-            mot.endsWith("i") ||
-            mot.length > 2 && mot.endsWith("u")
-        );
-    };
+    const participe = mot => estParticipePasse(mot);
 
     for(let i = 0; i < tokens.length; i++) {
 
@@ -1301,35 +1303,291 @@ function detectPonctuation(phrase) {
     return phrase.match(/[.,!?;:]/g);
 }
 
+/********************************************************
+ NIVEAU 1 — PRONOMINAUX / AUXILIAIRE ÊTRE / ACCORD
+********************************************************/
+
+const pronomsReflechis = [
+    "me","m'",
+    "te","t'",
+    "se","s'",
+    "nous","vous"
+];
+
+const auxiliairesTousComposes = [
+    "ai","as","a","avons","avez","ont",
+    "avais","avait","avions","aviez","avaient",
+    "aurai","auras","aura","aurons","aurez","auront",
+    "aurais","aurait","aurions","auriez","auraient",
+
+    "suis","es","est","sommes","êtes","sont",
+    "étais","était","étions","étiez","étaient",
+    "serai","seras","sera","serons","serez","seront",
+    "serais","serait","serions","seriez","seraient"
+];
+
+const auxiliairesEtre = [
+    "suis","es","est","sommes","êtes","sont",
+    "étais","était","étions","étiez","étaient",
+    "serai","seras","sera","serons","serez","seront",
+    "serais","serait","serions","seriez","seraient"
+];
+
+const verbesEtreMouvement = [
+    "allé","allée","allés","allées",
+    "venu","venue","venus","venues",
+    "parti","partie","partis","parties",
+    "arrivé","arrivée","arrivés","arrivées",
+    "entré","entrée","entrés","entrées",
+    "sorti","sortie","sortis","sorties",
+    "tombé","tombée","tombés","tombées",
+    "né","née","nés","nées",
+    "mort","morte","morts","mortes",
+    "resté","restée","restés","restées"
+];
+
+function estParticipePasse(mot) {
+    return (
+        mot.endsWith("é") ||
+        mot.endsWith("ée") ||
+        mot.endsWith("és") ||
+        mot.endsWith("ées") ||
+        mot.endsWith("i") ||
+        mot.endsWith("ie") ||
+        mot.endsWith("is") ||
+        mot.endsWith("ies") ||
+        mot.endsWith("u") ||
+        mot.endsWith("ue") ||
+        mot.endsWith("us") ||
+        mot.endsWith("ues")
+    );
+}
+
+function normaliserParticipePasse(mot) {
+
+    if(!mot) return mot;
+
+    if(participesVersInfinitifs[mot]) {
+        return participesVersInfinitifs[mot];
+    }
+
+    const base = mot
+        .replace(/ées$/, "é")
+        .replace(/ée$/, "é")
+        .replace(/és$/, "é")
+        .replace(/ies$/, "i")
+        .replace(/ie$/, "i")
+        .replace(/is$/, "i")
+        .replace(/ues$/, "u")
+        .replace(/ue$/, "u")
+        .replace(/us$/, "u");
+
+    if(participesVersInfinitifs[base]) {
+        return participesVersInfinitifs[base];
+    }
+
+    return base;
+}
+
+function detectVerbePronominal(tokens) {
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+
+        if(!pronomsReflechis.includes(mot)) {
+            continue;
+        }
+
+        const suivant = tokens[i + 1];
+        const suivant2 = tokens[i + 2];
+
+        // composé : je me suis lavé
+        // IMPORTANT : à tester AVANT "je me lave"
+        if(
+            suivant &&
+            auxiliairesEtre.includes(suivant) &&
+            suivant2 &&
+            estParticipePasse(suivant2)
+        ) {
+            return {
+                pronominal: true,
+                pronom: mot,
+                auxiliaire: suivant,
+                verbe: normaliserParticipePasse(suivant2),
+                participe: suivant2,
+                compose: true
+            };
+        }
+
+        // simple : je me lave
+        if(
+            suivant &&
+            (
+                verbesConnus.includes(suivant) ||
+                racinesVerbalesLingala[suivant]
+            )
+        ) {
+            return {
+                pronominal: true,
+                pronom: mot,
+                auxiliaire: null,
+                verbe: suivant,
+                participe: null,
+                compose: false
+            };
+        }
+    }
+
+    return {
+        pronominal: false,
+        pronom: null,
+        auxiliaire: null,
+        verbe: null,
+        participe: null,
+        compose: false
+    };
+}
+
+function detectAuxiliaireEtreCompose(tokens) {
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+        const suivant = tokens[i + 1];
+
+        if(
+            auxiliairesEtre.includes(mot) &&
+            suivant &&
+            estParticipePasse(suivant)
+        ) {
+            return {
+                actif: true,
+                auxiliaire: mot,
+                participe: suivant,
+                participeNormalise: normaliserParticipePasse(suivant)
+            };
+        }
+    }
+
+    return {
+        actif: false,
+        auxiliaire: null,
+        participe: null,
+        participeNormalise: null
+    };
+}
+
+function detectGenreNombreSujet(sujetTokens) {
+
+    const texte = sujetTokens.join(" ");
+
+    if(
+        texte.includes("elle") ||
+        texte.includes("ma ") ||
+        texte.includes("la ")
+    ) {
+        return {
+            genre: "féminin",
+            nombre: "singulier"
+        };
+    }
+
+    if(
+        texte.includes("elles") ||
+        texte.includes("mes ") ||
+        texte.includes("les ")
+    ) {
+        return {
+            genre: "féminin/pluriel possible",
+            nombre: "pluriel"
+        };
+    }
+
+    if(
+        texte.includes("ils") ||
+        texte.includes("enfants")
+    ) {
+        return {
+            genre: "masculin/neutre",
+            nombre: "pluriel"
+        };
+    }
+
+    return {
+        genre: "masculin/neutre",
+        nombre: "singulier"
+    };
+}
+
+function detectAccordParticipePasse(tokens, svc) {
+
+    const auxEtre =
+        detectAuxiliaireEtreCompose(tokens);
+
+    if(auxEtre.actif) {
+
+        const sujetInfo =
+            detectGenreNombreSujet(svc.sujet || []);
+
+        return {
+            type: "auxiliaire être",
+            auxiliaire: auxEtre.auxiliaire,
+            participe: auxEtre.participe,
+            participeNormalise: auxEtre.participeNormalise,
+            accordAvec: "sujet",
+            genre: sujetInfo.genre,
+            nombre: sujetInfo.nombre,
+            applique: true
+        };
+    }
+
+    const indexQue = tokens.indexOf("que");
+
+    if(indexQue !== -1) {
+
+        return {
+            type: "auxiliaire avoir",
+            accordAvec: "COD placé avant",
+            applique: true,
+            remarque: "accord détecté mais non transformé en Lingala"
+        };
+    }
+
+    return {
+        type: "aucun accord détecté",
+        applique: false
+    };
+}
 
 /********************************************************
  19. DETECTION VERBE
 ********************************************************/
 function detectVerbe(tokens) {
 
-    const auxiliaires = [
-        "ai","as","a","avons","avez","ont",
-        "avais","avait","avions","aviez","avaient",
-        "suis","es","est","sommes","êtes","sont"
-    ];
-
-    const modauxAller = ["vais","vas","va","allons","allez","vont"];
     const participesConnus = verbesConnus.filter(v =>
-
-    v.endsWith("é") ||
-    v.endsWith("i") ||
-    v.endsWith("u")
-);
+        estParticipePasse(v)
+    );
 
     for(let i = 0; i < tokens.length; i++) {
 
         const mot = tokens[i];
 
-        if(auxiliaires.includes(mot)) {
+        if(auxiliairesTousComposes.includes(mot)) {
+
             for(let j = i + 1; j < tokens.length; j++) {
+
                 if(tokens[j] === "ne" || tokens[j] === "pas") continue;
 
-                if(participesConnus.includes(tokens[j])) {
+                const participeNormalise =
+                    normaliserParticipePasse(tokens[j]);
+
+                if(
+                    participesConnus.includes(tokens[j]) ||
+                    racinesVerbalesLingala[tokens[j]] ||
+                    racinesVerbalesLingala[participeNormalise] ||
+                    estParticipePasse(tokens[j])
+                ) {
                     return mot + " " + tokens[j];
                 }
 
@@ -1337,11 +1595,17 @@ function detectVerbe(tokens) {
             }
         }
 
-        if(modauxAller.includes(mot)) {
+        if(verbesAller.includes(mot)) {
+
             for(let j = i + 1; j < tokens.length; j++) {
+
                 if(tokens[j] === "ne" || tokens[j] === "pas" || tokens[j] === "souvent") continue;
 
-                if(tokens[j].endsWith("er") || tokens[j].endsWith("ir") || tokens[j].endsWith("re")) {
+                if(
+                    tokens[j].endsWith("er") ||
+                    tokens[j].endsWith("ir") ||
+                    tokens[j].endsWith("re")
+                ) {
                     return mot + " " + tokens[j];
                 }
 
@@ -1355,7 +1619,7 @@ function detectVerbe(tokens) {
             return mot;
         }
 
-        if(typeof racinesVerbalesLingala !== "undefined" && racinesVerbalesLingala[mot]) {
+        if(racinesVerbalesLingala[mot]) {
             return mot;
         }
     }
@@ -1899,10 +2163,43 @@ function normaliserVerbeLingala(analyse) {
 
     const tokens = analyse.tokens;
 
-    const indexTrain = tokens.indexOf("train");
+    /****************************************
+     1. PRONOMINAL
+     Je me suis lavé
+    ****************************************/
+    const pronominal =
+        detectVerbePronominal(tokens);
+
+    if(pronominal.pronominal) {
+        return pronominal.verbe;
+    }
+
+    /****************************************
+     2. AUXILIAIRE ETRE
+     Elle est arrivée
+     Ils sont partis
+    ****************************************/
+    const auxEtre =
+        detectAuxiliaireEtreCompose(tokens);
+
+    if(auxEtre.actif) {
+
+        return (
+            auxEtre.participeNormalise ||
+            auxEtre.participe
+        );
+    }
+
+    /****************************************
+     3. EN TRAIN DE
+    ****************************************/
+    const indexTrain =
+        tokens.indexOf("train");
 
     if(indexTrain !== -1) {
-        for(let i = indexTrain; i < tokens.length; i++) {
+
+        for(let i=indexTrain;i<tokens.length;i++) {
+
             if(
                 tokens[i].endsWith("er") ||
                 tokens[i].endsWith("ir") ||
@@ -1913,21 +2210,38 @@ function normaliserVerbeLingala(analyse) {
         }
     }
 
-    if(analyse.groupeVerbal && analyse.groupeVerbal.participeOuInfinitif) {
-        return analyse.groupeVerbal.participeOuInfinitif;
-    }
-
+    /****************************************
+     4. VERBE COMPOSE
+     J'ai réservé
+     J'avais réservé
+    ****************************************/
     if(
         analyse.groupeVerbal &&
         analyse.groupeVerbal.participeOuInfinitif
     ) {
-        return analyse.groupeVerbal.participeOuInfinitif;
+
+        return normaliserParticipePasse(
+            analyse.groupeVerbal.participeOuInfinitif
+        );
     }
 
+    /****************************************
+     5. VERBE SIMPLE
+    ****************************************/
     if(analyse.verbe) {
-        const morceaux = analyse.verbe.split(" ");
+
+        const morceaux =
+            analyse.verbe.split(" ");
 
         for(const mot of morceaux) {
+
+            const normalise =
+                normaliserParticipePasse(mot);
+
+            if(racinesVerbalesLingala[normalise]) {
+                return normalise;
+            }
+
             if(racinesVerbalesLingala[mot]) {
                 return mot;
             }
@@ -2002,6 +2316,18 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
 
         if(aspect === "accompli") {
             return prefixe + "zalaki";
+        }
+
+        if(aspect === "anterieur_passe") {
+            return prefixe + "zalaki kala";
+        }
+
+        if(aspect === "anterieur_futur") {
+            return prefixe + "kozala";
+        }
+
+        if(aspect === "conditionnel_passe") {
+            return prefixe + "lingaki kozala";
         }
 
         if(aspect === "futur") {
@@ -2311,14 +2637,18 @@ function detectMotsInconnus(tokens) {
 
         return (
             !pronomsGlobaux.personnels.includes(t) &&
+            !pronomsReflechis.includes(t) &&
             !verbesConnus.includes(t) &&
+            !participesVersInfinitifs[t] &&
+            !participesVersInfinitifs[normaliserParticipePasse(t)] &&
             !nomsConnus.includes(t) &&
             !adjectifsConnus.includes(t) &&
             !adverbesConnus.includes(t) &&
             !prepositionsConnues.includes(t) &&
             !motsNonVerbaux.includes(t) &&
             !classesNominalesLingala[t] &&
-            !racinesVerbalesLingala[t]
+            !racinesVerbalesLingala[t] 
+
         );
     });
 }
@@ -2430,6 +2760,34 @@ function genererLingalaNatif(phrase) {
             aspect
         );
 
+
+    const pronominal =
+    detectVerbePronominal(tokensOriginaux);
+
+    if(pronominal.pronominal && verbeLingala) {
+
+        const prefixeSujet =
+            prefixesSujetLingala[sujet] || "";
+
+        const racine =
+            trouverRacineLingala(pronominal.verbe);
+
+        if(racine) {
+
+            if(aspect === "accompli") {
+                verbeLingala =
+                    prefixeSujet + "mi" + racine.slice(0, -1) + "aki";
+            }
+            else if(aspect === "futur") {
+                verbeLingala =
+                    prefixeSujet + "komi" + racine;
+            }
+            else {
+                verbeLingala =
+                    prefixeSujet + "mi" + racine;
+            }
+        }
+    }
 
     /************************************************
      CAS SPECIAL : JE VAIS MANGER
@@ -2932,6 +3290,8 @@ function genererFormesVerbeFrancais(infinitif) {
 }
 
 
+const participesVersInfinitifs = {};
+
 /********************************************************
  NORMALISATION LEXIQUE -> MOTEUR
  Cette fonction injecte le lexique dans :
@@ -3004,6 +3364,11 @@ function chargerLexiqueDansMoteur() {
                     ********************************/
                     racinesVerbalesLingala[forme] =
                         racineLingala;
+
+                    if(estParticipePasse(forme)) {
+                        participesVersInfinitifs[forme] = infinitif;
+                    }
+
                 });
             }
         }
@@ -3031,6 +3396,16 @@ function analyseComplete(phrase) {
         verbe: detectVerbe(tokens),
 
         groupeVerbal: transformerGroupeVerbal(detectSVC(tokens)),
+        pronominal: detectVerbePronominal(tokens),
+
+        auxiliaireEtreCompose:
+            detectAuxiliaireEtreCompose(tokens),
+
+        accordParticipePasse:
+            detectAccordParticipePasse(
+                tokens,
+                detectSVC(tokens)
+            ),
         infinitifs: detectInfinitif(tokens),
         prepositions: analyserPreposition(tokens),
 
@@ -3189,12 +3564,12 @@ console.log(genererParagrapheLingalaNatif("Je suis en train de manger du pain av
 //MODULE 7 — MOTEUR NATIF
 //Progressif:
 
-console.log(genererLingalaNatif("je suis en train de manger"));
+/*console.log(genererLingalaNatif("je suis en train de manger"));
 console.log(genererLingalaNatif("tu es en train de manger"));
 console.log(genererLingalaNatif("ils sont en train de manger"));
 
 //Progressif négatif:
-console.log(genererLingalaNatif("je ne suis pas en train de manger"));
+console.log(genererLingalaNatif("je ne suis pas en train de manger"));*/
 
 
 console.log("*********************************");
@@ -3202,14 +3577,24 @@ console.log("=============LEXIQUES============");
 
 
 //console.log(genererLingalaNatif("Je réserve un hôtel"));
-console.log(genererLingalaNatif("Je réserve un hôtel"));
+/*console.log(genererLingalaNatif("Je réserve un hôtel"));
 console.log(genererLingalaNatif("Je réserverai un hôtel"));
 console.log(genererLingalaNatif("J'ai réservé un hôtel"));
 console.log(genererLingalaNatif("Je télécharge un fichier"));
 console.log(genererLingalaNatif("Je vends un ordinateur"));
 
 console.log(genererLingalaNatif("Le médecin soigne un malade"));
-console.log(genererParagrapheLingalaNatif("Je réserve un hôtel. Je télécharge un fichier. Le médecin soigne un malade. Je vends un ordinateur."));
+console.log(genererParagrapheLingalaNatif("Je réserve un hôtel. Je télécharge un fichier. Le médecin soigne un malade. Je vends un ordinateur."));*/
+
+
+console.log("*********************************");
+console.log("=============NIVEAU1============");
+console.log(genererLingalaNatif("Je me lave"));
+console.log(genererLingalaNatif("Je me suis lavé"));
+console.log(genererLingalaNatif("Elle est arrivée"));
+console.log(genererLingalaNatif("Ils sont partis"));
+console.log(genererLingalaNatif("J'ai réservé un hôtel"));
+console.log(analyseComplete("Elle est arrivée"));
 
 </script>
 </body>
