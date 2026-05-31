@@ -168,6 +168,25 @@ const lexiqueDomaines = {
     }
 };
 
+const metaVerbesLingala = {
+
+    lia: "continu",
+
+    sala: "continu",
+
+    tanga: "continu",
+
+    koma: "continu",
+
+    kanisa: "mental",
+
+    mona: "mental",
+
+    yeba: "mental",
+
+    ndima: "mental"
+};
+
 const chiffresLingala = {
     0: "zero",
     1: "moko",
@@ -250,7 +269,8 @@ const nomsConnus = ["pain", "eau", "maison", "pomme", "enfants", "riz", "marché
 "ami",
 "travail",
 "école",
-"village"];
+"village", 
+"hôtel"];
 const adjectifsConnus = ["grand", "petit", "rouge", "malade", "fatigué"];
 const adverbesConnus = ["vite", "lentement", "bien", "mal", "souvent"];
 const prepositionsConnues = ["à", "de", "dans", "pour", "avec", "sans", "sur"];
@@ -446,7 +466,10 @@ const motsNonVerbaux = [
     // divers
     "en",
 
-    "y"
+    "y",
+
+    "l",
+   "l'"
 ];
 
 /********************************************************
@@ -917,14 +940,18 @@ function detectTempsVerbal(tokens) {
 		 PRESENT VERBES IRREGULIERS
 		************************************************/
 		const presentsIrreguliers = [
+            "vais","vas","va",
+            "allons","allez","vont",
 
-		    "vais","vas","va",
-		    "allons","allez","vont"
-		];
+            "sais",
+            "crois",
+            "vois",
+            "pense"
+        ];
 
-		if(presentsIrreguliers.includes(mot)) {
-		    return "présent";
-		}
+        if(presentsIrreguliers.includes(mot)) {
+            return "présent";
+        }
 
         /************************************************
          IMPARFAIT
@@ -1999,6 +2026,11 @@ const racinesVerbalesLingala = {
     verra: "mona",
     verront: "mona",
 
+    voyais: "mona",
+    voyait: "mona",
+    voyions: "mona",
+    voyiez: "mona",
+    voyaient: "mona",
 
     suis: "zala",
     est: "zala",
@@ -2057,6 +2089,12 @@ irons: "kende",
 irez: "kende",
 iront: "kende",
 
+irais: "kende",
+irait: "kende",
+irions: "kende",
+iriez: "kende",
+iraient: "kende",
+
 vas: "kende",
 allons: "kende",
 allez: "kende",
@@ -2067,7 +2105,34 @@ verras: "mona",
 verra: "mona",
 verrons: "mona",
 verrez: "mona",
-verront: "mona"
+verront: "mona",
+mangeais: "lia",
+mangeait: "lia",
+mangions: "lia",
+mangiez: "lia",
+mangeaient: "lia",
+
+pensais: "kanisa",
+pensait: "kanisa",
+pensaient: "kanisa",
+
+croyais: "ndima",
+croyait: "ndima",
+
+savais: "yeba",
+savait: "yeba",
+
+appeler: "benga",
+appelé: "benga",
+appelée: "benga",
+appelés: "benga",
+appelées: "benga",
+
+réserver: "bomba",
+réservé: "bomba",
+réservée: "bomba",
+réservés: "bomba",
+réservées: "bomba",
 
 };
 
@@ -2089,7 +2154,11 @@ const prefixesSujetLingala = {
 /********************************************************
  4. DETECTION ASPECT
 ********************************************************/
-function detectAspectLingala(phrase, analyse) {
+function detectAspectLingala(phrase, analyse, options = {}) {
+
+    if(options.aspectForce) {
+        return options.aspectForce;
+    }
 
     const tokens = analyse.tokens;
 
@@ -2098,6 +2167,10 @@ function detectAspectLingala(phrase, analyse) {
 
     if(aspectCompose) {
         return aspectCompose;
+    }
+
+    if(analyse.temps === "imparfait") {
+        return "imparfait";
     }
 
     if(phrase.includes("en train de")) {
@@ -2301,6 +2374,7 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
         return null;
     }
 
+
     /*****************************************
      VERBE ÊTRE / ZALA
     *****************************************/
@@ -2357,6 +2431,46 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
     }
 
     /*****************************************
+     IMPARFAIT
+     Dynamique :
+     - manger → azalaki kolia
+     - penser → akanisaki
+     - voir → amonaki
+    *****************************************/
+    if(aspect === "imparfait") {
+
+        const typeVerbe =
+            metaVerbesLingala[racine];
+
+        if(typeVerbe === "continu") {
+            return prefixe + "zalaki ko" + racine;
+        }
+
+        if(typeVerbe === "mental") {
+
+            if(racine.endsWith("a")) {
+                return prefixe +
+                       racine.slice(0,-1) +
+                       "aki";
+            }
+
+            return prefixe +
+                   racine +
+                   "aki";
+        }
+
+        if(racine.endsWith("a")) {
+            return prefixe +
+                   racine.slice(0,-1) +
+                   "aki";
+        }
+
+        return prefixe +
+               racine +
+               "aki";
+    }
+
+    /*****************************************
      ACCOMPLI
     *****************************************/
     if(aspect === "accompli") {
@@ -2374,7 +2488,16 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
     }
 
     if(aspect === "anterieur_passe") {
-        return prefixe + racine + "aki kala";
+
+        if(racine.endsWith("a")) {
+            return prefixe +
+                   racine.slice(0,-1) +
+                   "aki kala";
+        }
+
+        return prefixe +
+               racine +
+               "aki kala";
     }
 
     if(aspect === "anterieur_futur") {
@@ -2405,7 +2528,25 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
             return prefixe + "moni";
         }
 
+        if(racine === "yeba") {
+            return prefixe + "yebi";
+        }
+
         return prefixe + racine;
+    }
+
+    /*****************************************
+     CONDITIONNEL
+     il irait
+     il mangerait
+    *****************************************/
+    if(aspect === "conditionnel") {
+
+        if(racine === "kende") {
+            return prefixe + "kokende";
+        }
+
+        return prefixe + "ko" + racine;
     }
 
     return prefixe + racine;
@@ -2461,7 +2602,15 @@ ami: "moninga",
 voiture: "motuka",
 route: "nzela",
 village: "mboka",
-avion: "mpɛpɔ"
+avion: "mpɛpɔ",
+hôtel: "otɛlɛ",
+hôtels: "otɛlɛ",
+
+pomme: "pome",
+pommes: "pome",
+
+enfant: "mwana",
+enfants: "bana",
     };
 
     if(noms[mot]) return noms[mot];
@@ -2641,14 +2790,14 @@ function detectMotsInconnus(tokens) {
             !verbesConnus.includes(t) &&
             !participesVersInfinitifs[t] &&
             !participesVersInfinitifs[normaliserParticipePasse(t)] &&
+            !racinesVerbalesLingala[normaliserParticipePasse(t)] &&
             !nomsConnus.includes(t) &&
             !adjectifsConnus.includes(t) &&
             !adverbesConnus.includes(t) &&
             !prepositionsConnues.includes(t) &&
             !motsNonVerbaux.includes(t) &&
             !classesNominalesLingala[t] &&
-            !racinesVerbalesLingala[t] 
-
+            !racinesVerbalesLingala[t]
         );
     });
 }
@@ -2658,9 +2807,22 @@ function detectMotsInconnus(tokens) {
 ********************************************************/
 function detectSujetNominalLingala(tokens) {
 
-    /****************************************
-     CAS DEJA STABILISES
-    ****************************************/
+    // sujet pronominal
+    if(
+        tokens.includes("je") ||
+        tokens.includes("j'") ||
+        tokens.includes("tu") ||
+        tokens.includes("il") ||
+        tokens.includes("elle") ||
+        tokens.includes("nous") ||
+        tokens.includes("vous") ||
+        tokens.includes("ils") ||
+        tokens.includes("elles")
+    ) {
+        return null;
+    }
+
+    // cas stabilisés
     if(tokens.includes("mes") && tokens.includes("enfants")) {
         return "bana na ngai";
     }
@@ -2677,28 +2839,46 @@ function detectSujetNominalLingala(tokens) {
         return "mwana oyo";
     }
 
-    /****************************************
-     CAS GENERIQUE :
-     le médecin soigne...
-     le client achète...
-    ****************************************/
-    for(let i = 0; i < tokens.length; i++) {
+    // uniquement début de phrase
+    if(
+        ["le","la","un","une"].includes(tokens[0]) &&
+        tokens[1] &&
+        nomsConnus.includes(tokens[1])
+    ) {
+        return traduireNomClasseLingala(tokens[1]);
+    }
 
-        const mot = tokens[i];
+    return null;
+}
 
-        if(
-            mot === "le" ||
-            mot === "la" ||
-            mot === "un" ||
-            mot === "une"
-        ) {
+function aspectDepuisTempsFrancais(temps) {
 
-            const nom = tokens[i + 1];
+    if(temps === "présent") {
+        return "simple";
+    }
 
-            if(nom && nomsConnus.includes(nom)) {
-                return traduireNomClasseLingala(nom);
-            }
-        }
+    if(temps === "imparfait") {
+        return "imparfait";
+    }
+
+    if(temps === "passé composé") {
+        return "accompli";
+    }
+
+    if(temps === "plus-que-parfait") {
+        return "anterieur_passe";
+    }
+
+    if(temps === "futur simple") {
+        return "futur";
+    }
+
+    if(temps === "futur antérieur") {
+        return "anterieur_futur";
+    }
+
+    if(temps === "conditionnel présent") {
+        return "conditionnel";
     }
 
     return null;
@@ -2707,10 +2887,47 @@ function detectSujetNominalLingala(tokens) {
 /********************************************************
  13. GENERATEUR LINGALA NATIF
 ********************************************************/
-function genererLingalaNatif(phrase) {
-
+function genererLingalaNatif(
+    phrase,
+    ignorerConcordance = false,
+    options = {}
+) {
     const analyse = analyseComplete(phrase);
     const tokensOriginaux = analyse.tokens;
+
+    let concordance = null;
+
+if(!ignorerConcordance) {
+    concordance =
+        genererConcordanceLingala(
+            phrase
+        );
+}
+
+if(concordance) {
+    return {
+        phraseOriginale: phrase,
+        mode: "concordance",
+        traduction: concordance
+    };
+}
+
+const phrasePassive =
+    genererPhrasePassiveLingala(analyse);
+
+if(phrasePassive) {
+    return {
+        phraseOriginale: phrase,
+        mode: "passive",
+        analyse,
+        traduction: phrasePassive,
+        motsInconnus: detectMotsInconnus(analyse.tokens)
+    };
+}
+    const passive =
+    detectVoixPassive(
+        analyse.tokens
+    );
 
 
 
@@ -2748,7 +2965,7 @@ function genererLingalaNatif(phrase) {
     const sujet = trouverSujetLingalaNaturel(analyse);
 
     const aspect =
-        detectAspectLingala(phrase, analyse);
+    detectAspectLingala(phrase, analyse, options);
 
     const verbeNormal =
     normaliserVerbeLingala(analyse);
@@ -2897,6 +3114,7 @@ if(
  AJOUT VERBE
 *****************************************/
 if(verbeLingala) {
+    
     resultat.push(verbeLingala);
 }
 
@@ -3369,10 +3587,323 @@ function chargerLexiqueDansMoteur() {
                         participesVersInfinitifs[forme] = infinitif;
                     }
 
+                    indexInfinitifs[forme] = infinitif;
+                    indexInfinitifs[infinitif] = infinitif;
+
                 });
             }
         }
     }
+}
+
+function trouverInfinitifDepuisForme(mot) {
+
+    if(indexInfinitifs[mot]) {
+        return indexInfinitifs[mot];
+    }
+
+    const normalise =
+        normaliserParticipePasse(mot);
+
+    if(indexInfinitifs[normalise]) {
+        return indexInfinitifs[normalise];
+    }
+
+    return mot;
+}
+
+function detectVerbePrincipalConcordance(tokens) {
+
+    for(const mot of tokens) {
+
+        if(
+            verbesConnus.includes(mot) ||
+            racinesVerbalesLingala[mot]
+        ) {
+            return trouverInfinitifDepuisForme(mot);
+        }
+    }
+
+    return null;
+}
+
+
+/********************************************************
+ NIVEAU 2 — VOIX PASSIVE + CONCORDANCE DES TEMPS
+ VERSION DYNAMIQUE
+********************************************************/
+
+const verbesNoyauConcordance = {
+    penser: "kanisa",
+    croire: "ndima",
+    savoir: "yeba",
+    dire: "loba",
+    manger: "lia",
+    voir: "mona"
+};
+
+const indexInfinitifs = {};
+
+function chargerVerbesNoyauDansMoteur() {
+
+    for(const infinitif in verbesNoyauConcordance) {
+
+        const racine = verbesNoyauConcordance[infinitif];
+
+        ajouterSiAbsent(infinitifsConnus, infinitif);
+
+        const formes = genererFormesVerbeFrancais(infinitif);
+
+        formes.forEach(forme => {
+            ajouterSiAbsent(verbesConnus, forme);
+            racinesVerbalesLingala[forme] = racine;
+
+            if(estParticipePasse(forme)) {
+                participesVersInfinitifs[forme] = infinitif;
+            }
+        });
+    }
+}
+
+
+function detectVoixPassive(tokens) {
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+        const suivant = tokens[i + 1];
+        const suivant2 = tokens[i + 2];
+
+        // Le pain est mangé
+        if(
+            auxiliairesEtre.includes(mot) &&
+            suivant &&
+            estParticipePasse(suivant)
+        ) {
+            return {
+                passive: true,
+                indexAuxiliaire: i,
+                auxiliaire: mot,
+                participe: suivant,
+                verbe: normaliserParticipePasse(suivant),
+                sujetTokens: tokens.slice(0, i)
+            };
+        }
+
+        // L'hôtel a été réservé
+        if(
+            auxiliairesTousComposes.includes(mot) &&
+            suivant === "été" &&
+            suivant2 &&
+            estParticipePasse(suivant2)
+        ) {
+            return {
+                passive: true,
+                indexAuxiliaire: i,
+                auxiliaire: mot + " été",
+                participe: suivant2,
+                verbe: normaliserParticipePasse(suivant2),
+                sujetTokens: tokens.slice(0, i)
+            };
+        }
+    }
+
+    return {
+        passive: false
+    };
+}
+
+function nettoyerSujetNominalFrancais(tokens) {
+    return tokens.filter(t =>
+        !["le","la","les","l","l'","un","une","des"].includes(t)
+    );
+}
+
+function traduireSujetPassifLingala(tokens) {
+
+    const propres = nettoyerSujetNominalFrancais(tokens);
+
+    if(propres.length === 0) {
+        return {
+            texte: null,
+            copule: "ezali"
+        };
+    }
+
+    const motPrincipal = propres[0];
+    const traduction = traduireNomClasseLingala(motPrincipal);
+
+    const estPluriel =
+        motPrincipal.endsWith("s") ||
+        motPrincipal === "enfants";
+
+    const estHumain =
+        classesNominalesLingala[motPrincipal] &&
+        classesNominalesLingala[motPrincipal].classe === "humain";
+
+    return {
+        texte: traduction,
+        copule: estPluriel && estHumain ? "bazali" : "ezali"
+    };
+}
+
+function genererRacinePassiveLingala(verbe) {
+
+    const racine = trouverRacineLingala(verbe);
+
+    if(!racine) {
+        return null;
+    }
+
+    const passifsIrreguliers = {
+        lia: "koliama",
+        benga: "kobengama",
+        boma: "kobomama",
+        bomba: "kobombama",
+        mona: "komonama",
+        pesa: "kopesama",
+        lakisa: "kolakisama"
+    };
+
+    if(passifsIrreguliers[racine]) {
+        return passifsIrreguliers[racine];
+    }
+
+    if(racine.endsWith("a")) {
+        return "ko" + racine.slice(0,-1) + "ama";
+    }
+
+    return "ko" + racine + "ama";
+}
+
+function genererPhrasePassiveLingala(analyse) {
+
+    const passive = detectVoixPassive(analyse.tokens);
+
+    if(!passive.passive) return null;
+
+    const sujetPassif =
+        traduireSujetPassifLingala(passive.sujetTokens);
+
+    const verbePassif =
+        genererRacinePassiveLingala(passive.verbe);
+
+    if(!verbePassif) return null;
+
+    return reconstruirePhraseLingala([
+        sujetPassif.texte,
+        sujetPassif.copule,
+        verbePassif
+    ]);
+}
+
+function detectConcordanceTemps(tokens) {
+
+    let indexQue = tokens.indexOf("que");
+
+    if(indexQue === -1) {
+        indexQue = tokens.indexOf("qu'");
+    }
+
+    if(indexQue === -1) {
+        return {
+            concordance: false
+        };
+    }
+
+    return {
+        concordance: true,
+        principale: tokens.slice(0, indexQue),
+        secondaire: tokens.slice(indexQue + 1)
+    };
+}
+
+function genererConcordanceLingala(phrase) {
+
+    const tokens = tokenizer(phrase);
+
+    const info =
+        detectConcordanceTemps(tokens);
+
+    if(!info.concordance) {
+        return null;
+    }
+
+    const phrasePrincipale =
+        info.principale.join(" ");
+
+    const phraseSecondaire =
+        info.secondaire.join(" ");
+
+    const analysePrincipale =
+        analyseComplete(phrasePrincipale);
+
+    const analyseSecondaire =
+        analyseComplete(phraseSecondaire);
+
+    const aspectPrincipal =
+        aspectDepuisTempsFrancais(
+            analysePrincipale.temps
+        );
+
+    const aspectSecondaire =
+        aspectDepuisTempsFrancais(
+            analyseSecondaire.temps
+        );
+
+    const tradPrincipale =
+        genererLingalaNatif(
+            phrasePrincipale,
+            true,
+            {
+                aspectForce: aspectPrincipal
+            }
+        );
+
+    const tradSecondaire =
+        genererLingalaNatif(
+            phraseSecondaire,
+            true,
+            {
+                aspectForce: aspectSecondaire
+            }
+        );
+
+    if(
+        !tradPrincipale ||
+        !tradSecondaire ||
+        !tradPrincipale.traduction ||
+        !tradSecondaire.traduction
+    ) {
+        return null;
+    }
+
+    return reconstruirePhraseLingala([
+        tradPrincipale.traduction,
+        "ete",
+        tradSecondaire.traduction
+    ]);
+}
+
+function trouverTempsPrincipal(tokens) {
+
+    if(
+        tokens.includes("pensais") ||
+        tokens.includes("croyais") ||
+        tokens.includes("savais")
+    ) {
+        return "imparfait";
+    }
+
+    if(
+        tokens.includes("penserai") ||
+        tokens.includes("croirai") ||
+        tokens.includes("saurai")
+    ) {
+        return "futur";
+    }
+
+    return "present";
 }
 
 /********************************************************
@@ -3472,6 +4003,8 @@ function analyseComplete(phrase) {
 //const phrase = "mangeant"; 
 
 chargerLexiqueDansMoteur();
+
+chargerVerbesNoyauDansMoteur();
 
 const phrase = "je manger"; 
 
@@ -3587,14 +4120,40 @@ console.log(genererLingalaNatif("Le médecin soigne un malade"));
 console.log(genererParagrapheLingalaNatif("Je réserve un hôtel. Je télécharge un fichier. Le médecin soigne un malade. Je vends un ordinateur."));*/
 
 
-console.log("*********************************");
+/*console.log("*********************************");
 console.log("=============NIVEAU1============");
 console.log(genererLingalaNatif("Je me lave"));
 console.log(genererLingalaNatif("Je me suis lavé"));
 console.log(genererLingalaNatif("Elle est arrivée"));
 console.log(genererLingalaNatif("Ils sont partis"));
 console.log(genererLingalaNatif("J'ai réservé un hôtel"));
-console.log(analyseComplete("Elle est arrivée"));
+console.log(analyseComplete("Elle est arrivée"));*/
+
+console.log("*********************************");
+console.log("=============NIVEAU2============");
+console.log(genererLingalaNatif("Le pain est mangé"));
+console.log(genererLingalaNatif("La pomme est mangée"));
+console.log(genererLingalaNatif("Les enfants sont appelés"));
+console.log(genererLingalaNatif("L'hôtel est réservé"));
+
+console.log(genererLingalaNatif("Je pense qu'il mange"));
+console.log(genererLingalaNatif("Je pensais qu'il mangeait"));
+console.log(genererLingalaNatif("Je pense qu'il a mangé"));
+console.log(genererLingalaNatif("Je pensais qu'il avait mangé"));
+console.log(genererLingalaNatif("Je penserai qu'il mangera"));
+
+console.log("=============NIVEAU2 BIS============");
+console.log(genererLingalaNatif("Je vois qu'il mange"));
+console.log(genererLingalaNatif("Je voyais qu'il mangeait"));
+console.log(genererLingalaNatif("Je sais qu'il mange"));
+console.log(genererLingalaNatif("Je savais qu'il mangeait"));
+
+console.log(genererLingalaNatif("Je crois qu'il a mangé"));
+console.log(genererLingalaNatif("Je croyais qu'il avait mangé"));
+console.log(genererLingalaNatif("Je pense qu'il voit la maison"));
+console.log(genererLingalaNatif("Je pensais qu'il voyait la maison"));
+console.log(genererLingalaNatif("Je pense qu'il ira"));
+console.log(genererLingalaNatif("Je pensais qu'il irait"));
 
 </script>
 </body>
