@@ -2134,6 +2134,19 @@ réservée: "bomba",
 réservés: "bomba",
 réservées: "bomba",
 
+partir: "kende",
+
+parti: "kende",
+partie: "kende",
+partis: "kende",
+parties: "kende",
+
+serais:"zala",
+serait:"zala",
+serions:"zala",
+seriez:"zala",
+seraient:"zala",
+
 };
 
 /********************************************************
@@ -2505,7 +2518,12 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
     }
 
     if(aspect === "conditionnel_passe") {
-        return prefixe + "lingaki " + racine + "a";
+
+        if(racine === "kende") {
+            return prefixe + "lingaki kokende";
+        }
+
+        return prefixe + "lingaki ko" + racine;
     }
 
     /*****************************************
@@ -2881,6 +2899,12 @@ function aspectDepuisTempsFrancais(temps) {
         return "conditionnel";
     }
 
+    if(
+        temps === "conditionnel passé"
+    ) {
+        return "conditionnel_passe";
+    }
+
     return null;
 }
 
@@ -2894,6 +2918,13 @@ function genererLingalaNatif(
 ) {
     const analyse = analyseComplete(phrase);
     const tokensOriginaux = analyse.tokens;
+
+    const niveau3 =
+    genererNiveau3Lingala(phrase);
+
+    if(niveau3) {
+        return niveau3;
+    }
 
     let concordance = null;
 
@@ -3668,29 +3699,60 @@ function chargerVerbesNoyauDansMoteur() {
 
 function detectVoixPassive(tokens) {
 
+    const participesMouvement = [
+        "allé","allée","allés","allées",
+        "venu","venue","venus","venues",
+        "parti","partie","partis","parties",
+        "arrivé","arrivée","arrivés","arrivées",
+        "entré","entrée","entrés","entrées",
+        "sorti","sortie","sortis","sorties",
+        "tombé","tombée","tombés","tombées",
+        "né","née","nés","nées",
+        "mort","morte","morts","mortes",
+        "resté","restée","restés","restées"
+    ];
+
     for(let i = 0; i < tokens.length; i++) {
 
         const mot = tokens[i];
         const suivant = tokens[i + 1];
         const suivant2 = tokens[i + 2];
 
-        // Le pain est mangé
+        /*************************************
+         être + participe mouvement
+         => PAS PASSIF
+        *************************************/
+        if(
+            auxiliairesEtre.includes(mot) &&
+            suivant &&
+            participesMouvement.includes(suivant)
+        ) {
+            return {
+                passive:false
+            };
+        }
+
+        /*************************************
+         pain est mangé
+        *************************************/
         if(
             auxiliairesEtre.includes(mot) &&
             suivant &&
             estParticipePasse(suivant)
         ) {
             return {
-                passive: true,
-                indexAuxiliaire: i,
-                auxiliaire: mot,
-                participe: suivant,
-                verbe: normaliserParticipePasse(suivant),
-                sujetTokens: tokens.slice(0, i)
+                passive:true,
+                indexAuxiliaire:i,
+                auxiliaire:mot,
+                participe:suivant,
+                verbe:normaliserParticipePasse(suivant),
+                sujetTokens:tokens.slice(0,i)
             };
         }
 
-        // L'hôtel a été réservé
+        /*************************************
+         a été mangé
+        *************************************/
         if(
             auxiliairesTousComposes.includes(mot) &&
             suivant === "été" &&
@@ -3698,18 +3760,18 @@ function detectVoixPassive(tokens) {
             estParticipePasse(suivant2)
         ) {
             return {
-                passive: true,
-                indexAuxiliaire: i,
-                auxiliaire: mot + " été",
-                participe: suivant2,
-                verbe: normaliserParticipePasse(suivant2),
-                sujetTokens: tokens.slice(0, i)
+                passive:true,
+                indexAuxiliaire:i,
+                auxiliaire:mot + " été",
+                participe:suivant2,
+                verbe:normaliserParticipePasse(suivant2),
+                sujetTokens:tokens.slice(0,i)
             };
         }
     }
 
     return {
-        passive: false
+        passive:false
     };
 }
 
@@ -3904,6 +3966,324 @@ function trouverTempsPrincipal(tokens) {
     }
 
     return "present";
+}
+
+
+/********************************************************
+ NIVEAU 3 — CLASSES NOMINALES + RELATIVES + CONDITIONNELS
+ VERSION STABLE ET DYNAMIQUE
+********************************************************/
+
+/********************************************************
+ 1. CLASSES NOMINALES COMPLETES
+********************************************************/
+const classesAccordsLingala = {
+    humain_singulier: {
+        copule: "azali",
+        demonstratif: "oyo",
+        relatif: "oyo",
+        pluriel: false
+    },
+    humain_pluriel: {
+        copule: "bazali",
+        demonstratif: "oyo",
+        relatif: "oyo",
+        pluriel: true
+    },
+    objet_singulier: {
+        copule: "ezali",
+        demonstratif: "oyo",
+        relatif: "oyo",
+        pluriel: false
+    },
+    objet_pluriel: {
+        copule: "ezali",
+        demonstratif: "oyo",
+        relatif: "oyo",
+        pluriel: true
+    }
+};
+
+function getClasseNominaleLingala(mot) {
+
+    if(classesNominalesLingala[mot]) {
+
+        const info = classesNominalesLingala[mot];
+
+        const pluriel =
+            mot.endsWith("s") ||
+            info.pluriel === traduireNomClasseLingala(mot);
+
+        const type =
+            info.classe === "humain"
+                ? "humain"
+                : "objet";
+
+        return {
+            mot,
+            type,
+            nombre: pluriel ? "pluriel" : "singulier",
+            accord:
+                type + "_" + (pluriel ? "pluriel" : "singulier"),
+            traduction: pluriel ? info.pluriel : info.singulier
+        };
+    }
+
+    const traduction = traduireNomClasseLingala(mot);
+
+    return {
+        mot,
+        type: mot.endsWith("s") ? "objet" : "objet",
+        nombre: mot.endsWith("s") ? "pluriel" : "singulier",
+        accord: mot.endsWith("s") ? "objet_pluriel" : "objet_singulier",
+        traduction
+    };
+}
+
+function getCopuleClasseLingala(mot) {
+
+    const classe = getClasseNominaleLingala(mot);
+
+    const accord =
+        classesAccordsLingala[classe.accord];
+
+    return accord ? accord.copule : "ezali";
+}
+
+/********************************************************
+ 2. RELATIVES
+ Exemples :
+ l'enfant qui mange
+ la maison que je vois
+ les enfants que tu vois
+********************************************************/
+function detectRelativeNiveau3(tokens) {
+
+    const relatifs = ["qui", "que", "qu'", "où", "dont"];
+
+    const indexRelatif =
+        tokens.findIndex(t => relatifs.includes(t));
+
+    if(indexRelatif === -1) {
+        return {
+            relative: false
+        };
+    }
+
+    return {
+        relative: true,
+        relatif: tokens[indexRelatif],
+        antecedent: tokens.slice(0, indexRelatif),
+        proposition: tokens.slice(indexRelatif + 1)
+    };
+}
+
+function nettoyerAntecedentRelatif(tokens) {
+
+    return tokens.filter(t =>
+        ![
+            "le","la","les","un","une","des",
+            "l","l'",
+            "ce","cet","cette","ces"
+        ].includes(t)
+    );
+}
+
+function traduireAntecedentRelatif(tokens) {
+
+    const propres =
+        nettoyerAntecedentRelatif(tokens);
+
+    if(propres.length === 0) {
+        return null;
+    }
+
+    const nom =
+        propres[propres.length - 1];
+
+    return traduireNomClasseLingala(nom);
+}
+
+function genererRelativeLingala(phrase) {
+
+    const tokens = tokenizer(phrase);
+
+    const info =
+        detectRelativeNiveau3(tokens);
+
+    if(!info.relative) {
+        return null;
+    }
+
+    const antecedentLingala =
+        traduireAntecedentRelatif(info.antecedent);
+
+    if(!antecedentLingala) {
+        return null;
+    }
+
+    const phraseSubordonnee =
+        info.proposition.join(" ");
+
+    const traductionSubordonnee =
+        genererLingalaNatif(
+            phraseSubordonnee,
+            true
+        );
+
+    if(
+        !traductionSubordonnee ||
+        !traductionSubordonnee.traduction
+    ) {
+        return null;
+    }
+
+    return reconstruirePhraseLingala([
+        antecedentLingala,
+        "oyo",
+        traductionSubordonnee.traduction
+    ]);
+}
+
+/********************************************************
+ 3. CONDITIONNELS
+ Exemples :
+ si je mange je partirai
+ si j'avais mangé je serais parti
+********************************************************/
+function detectConditionnelNiveau3(tokens) {
+
+    const indexSi = tokens.indexOf("si");
+
+    if(indexSi === -1) {
+        return {
+            conditionnel: false
+        };
+    }
+
+    const indexVirgule = -1;
+
+    let coupure = -1;
+
+    for(let i = indexSi + 1; i < tokens.length; i++) {
+
+        if(
+            ["je","tu","il","elle","nous","vous","ils","elles","j'"].includes(tokens[i]) &&
+            i > indexSi + 1
+        ) {
+            coupure = i;
+            break;
+        }
+    }
+
+    if(coupure === -1) {
+        return {
+            conditionnel: false
+        };
+    }
+
+    return {
+        conditionnel: true,
+        condition: tokens.slice(indexSi + 1, coupure),
+        consequence: tokens.slice(coupure)
+    };
+}
+
+function genererConditionnelLingala(phrase) {
+
+    const tokens = tokenizer(phrase);
+
+    const info =
+        detectConditionnelNiveau3(tokens);
+
+    if(!info.conditionnel) {
+        return null;
+    }
+
+    const phraseCondition =
+        info.condition.join(" ");
+
+    const phraseConsequence =
+        info.consequence.join(" ");
+
+    const analyseCondition =
+        analyseComplete(phraseCondition);
+
+    const analyseConsequence =
+        analyseComplete(phraseConsequence);
+
+    const aspectCondition =
+        aspectDepuisTempsFrancais(
+            analyseCondition.temps
+        );
+
+    const aspectConsequence =
+        aspectDepuisTempsFrancais(
+            analyseConsequence.temps
+        );
+
+    const traductionCondition =
+        genererLingalaNatif(
+            phraseCondition,
+            true,
+            {
+                aspectForce: aspectCondition
+            }
+        );
+
+    const traductionConsequence =
+        genererLingalaNatif(
+            phraseConsequence,
+            true,
+            {
+                aspectForce: aspectConsequence
+            }
+        );
+
+    if(
+        !traductionCondition ||
+        !traductionConsequence ||
+        !traductionCondition.traduction ||
+        !traductionConsequence.traduction
+    ) {
+        return null;
+    }
+
+    return reconstruirePhraseLingala([
+        "soki",
+        traductionCondition.traduction,
+        traductionConsequence.traduction
+    ]);
+}
+
+/********************************************************
+ 4. ENTREE NIVEAU 3
+********************************************************/
+function genererNiveau3Lingala(phrase) {
+
+    const conditionnel =
+        genererConditionnelLingala(phrase);
+
+    if(conditionnel) {
+        return {
+            phraseOriginale: phrase,
+            mode: "conditionnel",
+            traduction: conditionnel
+        };
+    }
+
+    const relative =
+        genererRelativeLingala(phrase);
+
+    if(relative) {
+        return {
+            phraseOriginale: phrase,
+            mode: "relative",
+            traduction: relative
+        };
+    }
+
+    return null;
 }
 
 /********************************************************
@@ -4154,6 +4534,15 @@ console.log(genererLingalaNatif("Je pense qu'il voit la maison"));
 console.log(genererLingalaNatif("Je pensais qu'il voyait la maison"));
 console.log(genererLingalaNatif("Je pense qu'il ira"));
 console.log(genererLingalaNatif("Je pensais qu'il irait"));
+
+console.log("=============NIVEAU3============");
+console.log(genererLingalaNatif("L'enfant qui mange"));
+console.log(genererLingalaNatif("La maison que je vois"));
+console.log(genererLingalaNatif("Les enfants que tu vois"));
+
+console.log(genererLingalaNatif("Si je mange je partirai"));
+console.log(genererLingalaNatif("Si j'avais mangé je serais parti"));
+
 
 </script>
 </body>
