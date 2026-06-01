@@ -168,6 +168,337 @@ const lexiqueDomaines = {
     }
 };
 
+const verbesIrreguliersComplets = {
+
+    voir: {
+        racineLingala: "mona",
+
+        present: [
+            "vois","vois",
+            "voit",
+            "voyons",
+            "voyez",
+            "voient"
+        ],
+
+        imparfait: [
+            "voyais",
+            "voyait",
+            "voyions",
+            "voyiez",
+            "voyaient"
+        ],
+
+        futur: [
+            "verrai",
+            "verras",
+            "verra",
+            "verrons",
+            "verrez",
+            "verront"
+        ],
+
+        conditionnel: [
+            "verrais",
+            "verrait",
+            "verrions",
+            "verriez",
+            "verraient"
+        ],
+
+        participePasse: [
+            "vu"
+        ]
+    },
+
+    venir: {
+        racineLingala: "ya",
+
+        present: [
+            "viens","viens",
+            "vient",
+            "venons",
+            "venez",
+            "viennent"
+        ],
+
+        imparfait: [
+            "venais",
+            "venait",
+            "venions",
+            "veniez",
+            "venaient"
+        ],
+
+        futur: [
+            "viendrai",
+            "viendras",
+            "viendra",
+            "viendrons",
+            "viendrez",
+            "viendront"
+        ],
+
+        conditionnel: [
+            "viendrais",
+            "viendrait",
+            "viendrions",
+            "viendriez",
+            "viendraient"
+        ],
+
+        participePasse: [
+            "venu",
+            "venue",
+            "venus",
+            "venues"
+        ]
+    },
+
+    prendre: {
+        racineLingala: "zwa",
+
+        present: [
+            "prends",
+            "prend",
+            "prenons",
+            "prenez",
+            "prennent"
+        ],
+
+        imparfait: [
+            "prenais",
+            "prenait",
+            "prenions",
+            "preniez",
+            "prenaient"
+        ],
+
+        futur: [
+            "prendrai",
+            "prendras",
+            "prendra",
+            "prendrons",
+            "prendrez",
+            "prendront"
+        ],
+
+        conditionnel: [
+            "prendrais",
+            "prendrait",
+            "prendrions",
+            "prendriez",
+            "prendraient"
+        ],
+
+        participePasse: [
+            "pris"
+        ]
+    },
+
+    pouvoir: {
+        racineLingala: "kokoka",
+
+        present:[
+            "peux","peut",
+            "pouvons","pouvez","peuvent"
+        ],
+
+        imparfait:[
+            "pouvais","pouvait",
+            "pouvions","pouviez",
+            "pouvaient"
+        ],
+
+        futur:[
+            "pourrai","pourras","pourra",
+            "pourrons","pourrez","pourront"
+        ],
+
+        conditionnel:[
+            "pourrais","pourrait",
+            "pourrions","pourriez",
+            "pourraient"
+        ],
+
+        participePasse:["pu"]
+    },
+
+    vouloir: {
+        racineLingala: "linga",
+
+        present:[
+            "veux","veut",
+            "voulons","voulez",
+            "veulent"
+        ],
+
+        imparfait:[
+            "voulais","voulait",
+            "voulions","vouliez",
+            "voulaient"
+        ],
+
+        futur:[
+            "voudrai","voudras","voudra",
+            "voudrons","voudrez","voudront"
+        ],
+
+        conditionnel:[
+            "voudrais","voudrait",
+            "voudrions","voudriez",
+            "voudraient"
+        ],
+
+        participePasse:["voulu"]
+    },
+
+    devoir: {
+        racineLingala: "esengeli",
+
+        present:[
+            "dois","doit",
+            "devons","devez",
+            "doivent"
+        ],
+
+        imparfait:[
+            "devais","devait",
+            "devions","deviez",
+            "devaient"
+        ],
+
+        futur:[
+            "devrai","devras","devra",
+            "devrons","devrez","devront"
+        ],
+
+        conditionnel:[
+            "devrais","devrait",
+            "devrions","devriez",
+            "devraient"
+        ],
+
+        participePasse:["dû"]
+    },
+
+    savoir: {
+        racineLingala: "yeba",
+
+        present:[
+            "sais","sait",
+            "savons","savez",
+            "savent"
+        ],
+
+        imparfait:[
+            "savais","savait",
+            "savions","saviez",
+            "savaient"
+        ],
+
+        futur:[
+            "saurai","sauras","saura",
+            "saurons","saurez","sauront"
+        ],
+
+        conditionnel:[
+            "saurais","saurait",
+            "saurions","sauriez",
+            "sauraient"
+        ],
+
+        participePasse:["su"]
+    },
+
+    aller: {
+        racineLingala: "kende",
+
+        present:[
+            "vais","vas","va",
+            "allons","allez","vont"
+        ],
+
+        imparfait:[
+            "allais","allait",
+            "allions","alliez",
+            "allaient"
+        ],
+
+        futur:[
+            "irai","iras","ira",
+            "irons","irez","iront"
+        ],
+
+        conditionnel:[
+            "irais","irait",
+            "irions","iriez",
+            "iraient"
+        ],
+
+        participePasse:[
+            "allé","allée",
+            "allés","allées"
+        ]
+    },
+
+    être: {
+        racineLingala: "zala",
+
+        present:[
+            "suis","es","est",
+            "sommes","êtes","sont"
+        ],
+
+        imparfait:[
+            "étais","était",
+            "étions","étiez",
+            "étaient"
+        ],
+
+        futur:[
+            "serai","seras","sera",
+            "serons","serez","seront"
+        ],
+
+        conditionnel:[
+            "serais","serait",
+            "serions","seriez",
+            "seraient"
+        ],
+
+        participePasse:["été"]
+    },
+
+    avoir: {
+        racineLingala: "zala na",
+
+        present:[
+            "ai","as","a",
+            "avons","avez","ont"
+        ],
+
+        imparfait:[
+            "avais","avait",
+            "avions","aviez",
+            "avaient"
+        ],
+
+        futur:[
+            "aurai","auras","aura",
+            "aurons","aurez","auront"
+        ],
+
+        conditionnel:[
+            "aurais","aurait",
+            "aurions","auriez",
+            "auraient"
+        ],
+
+        participePasse:["eu"]
+    }
+};
+
 const metaVerbesLingala = {
 
     lia: "continu",
@@ -3149,6 +3480,34 @@ if(verbeLingala) {
     resultat.push(verbeLingala);
 }
 
+/*****************************************
+ INFINITIF APRES VERBE IRREGULIER
+ Je peux manger
+ Je voudrais partir
+*****************************************/
+const infinitifSuivant = analyse.tokens.find(t =>
+    infinitifsConnus.includes(t)
+);
+
+if(infinitifSuivant) {
+
+    const racineInf =
+        trouverRacineLingala(infinitifSuivant);
+
+    if(racineInf) {
+
+        const dejaDansVerbe =
+            verbeLingala.includes(racineInf);
+
+        if(!dejaDansVerbe) {
+
+            resultat.push(
+                "ko" + racineInf
+            );
+        }
+    }
+}
+
 if(!verbeLingala) {
 
     return {
@@ -3210,7 +3569,7 @@ function nettoyerComplementLingala(complement, analyse, aspect) {
 
     let resultat = [...complement];
 
-    const motsASupprimer = [
+    /*const motsASupprimer = [
         "le","la","les","du","de","des",
         //"un","une",
         "mon","ma","mes","ton","ta","tes",
@@ -3223,8 +3582,76 @@ function nettoyerComplementLingala(complement, analyse, aspect) {
         "vais","vas","va","vont",
         "suis","es","est","sommes","êtes","sont",
         "cet","cette","ce",
-        "irons","verront","vas"
-    ];
+        "irons","verront","vas",
+
+        "venir",
+        "voir",
+        "prendre",
+        "pouvoir",
+        "vouloir",
+        "devoir",
+        "savoir",
+        "partir"
+
+    ];*/
+
+    const motsASupprimer = [
+
+    "le","la","les","du","de","des",
+
+    "mon","ma","mes","ton","ta","tes",
+
+    "ne","pas",
+
+    "en","train",
+
+    "manger",
+    "voir",
+    "aller",
+    "venir",
+    "partir",
+    "prendre",
+    "pouvoir",
+    "vouloir",
+    "devoir",
+    "savoir",
+
+    "être",
+    "avoir",
+
+    "mangé",
+    "vu",
+    "allé",
+    "venu",
+
+    "mange",
+    "manges",
+    "mangent",
+
+    "vois",
+    "voit",
+    "voient",
+
+    "vais",
+    "vas",
+    "va",
+    "vont",
+
+    "suis",
+    "es",
+    "est",
+    "sommes",
+    "êtes",
+    "sont",
+
+    "cet",
+    "cette",
+    "ce",
+
+    "irons",
+    "verront",
+    "vas"
+];
 
     resultat = resultat.filter(t => !motsASupprimer.includes(t));
 
@@ -4286,6 +4713,56 @@ function genererNiveau3Lingala(phrase) {
     return null;
 }
 
+function chargerVerbesIrreguliersComplets() {
+
+    for(const infinitif in verbesIrreguliersComplets) {
+
+        const data =
+            verbesIrreguliersComplets[infinitif];
+
+        ajouterSiAbsent(
+            infinitifsConnus,
+            infinitif
+        );
+
+        racinesVerbalesLingala[infinitif] =
+            data.racineLingala;
+
+        const listes = [
+
+            data.present,
+            data.imparfait,
+            data.futur,
+            data.conditionnel,
+            data.participePasse
+        ];
+
+        listes.forEach(liste => {
+
+            liste.forEach(forme => {
+
+                ajouterSiAbsent(
+                    verbesConnus,
+                    forme
+                );
+
+                racinesVerbalesLingala[forme] =
+                    data.racineLingala;
+
+                indexInfinitifs[forme] =
+                    infinitif;
+
+                if(estParticipePasse(forme)) {
+
+                    participesVersInfinitifs[
+                        forme
+                    ] = infinitif;
+                }
+            });
+        });
+    }
+}
+
 /********************************************************
  00. ANALYSE COMPLETE
 ********************************************************/
@@ -4385,6 +4862,8 @@ function analyseComplete(phrase) {
 chargerLexiqueDansMoteur();
 
 chargerVerbesNoyauDansMoteur();
+
+chargerVerbesIrreguliersComplets();
 
 const phrase = "je manger"; 
 
@@ -4542,6 +5021,23 @@ console.log(genererLingalaNatif("Les enfants que tu vois"));
 
 console.log(genererLingalaNatif("Si je mange je partirai"));
 console.log(genererLingalaNatif("Si j'avais mangé je serais parti"));
+
+console.log("=============NIVEAU4============");
+
+console.log(genererLingalaNatif("Je vois la maison"));
+// attendu : namoni ndako
+
+console.log(genererLingalaNatif("Je viendrai demain"));
+// attendu : nakoya lobi
+
+console.log(genererLingalaNatif("Je prends une pomme"));
+// attendu : nazwa pome moko
+
+console.log(genererLingalaNatif("Je peux manger"));
+// attendu : nakokoka kolia
+
+console.log(genererLingalaNatif("Je voudrais partir"));
+// attendu : nalinga kokende
 
 
 </script>
