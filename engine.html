@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
 </head>
 <body>
 
 
 <script>
-	/********************************************************************
+    /********************************************************************
  PACK NLP FRANÇAIS
  Auteur : ChatGPT
  Description :
@@ -726,9 +726,9 @@ const expressionsFixes = [
     ["avoir", "raison"],
 
     ["avaient", "faim"],
-	["a", "faim"],
-	["ai", "faim"],
-	["as", "faim"]
+    ["a", "faim"],
+    ["ai", "faim"],
+    ["as", "faim"]
 ];
 
 
@@ -851,17 +851,17 @@ const verbesConnus = [
 
 
     "sois",
-	"soit",
-	"soyons",
-	"soyez",
-	"soient",
+    "soit",
+    "soyons",
+    "soyez",
+    "soient",
 
-	"aie",
-	"aies",
-	"ait",
-	"ayons",
-	"ayez",
-	"aient",
+    "aie",
+    "aies",
+    "ait",
+    "ayons",
+    "ayez",
+    "aient",
 
     "ai",
     "as",
@@ -894,7 +894,20 @@ const verbesConnus = [
    
     "irai","iras","ira","irons","irez","iront",
     "verrai","verras","verra","verrons","verrez","verront",
-    "vas"
+    "vas",
+
+    "eus",
+"eut",
+"eûmes",
+"eûtes",
+"eurent",
+
+"fus",
+"fut",
+"fûmes",
+"fûtes",
+"furent"
+
     
     
 
@@ -1036,212 +1049,115 @@ function detectTempsVerbal(tokens) {
 
     const participe = mot => estParticipePasse(mot);
 
+    const auxiliairesPresent = [
+        "ai","as","a","avons","avez","ont",
+        "suis","es","est","sommes","êtes","sont"
+    ];
+
+    const auxiliairesImparfait = [
+        "avais","avait","avions","aviez","avaient",
+        "étais","était","étions","étiez","étaient"
+    ];
+
+    const auxiliairesFutur = [
+        "aurai","auras","aura","aurons","aurez","auront",
+        "serai","seras","sera","serons","serez","seront"
+    ];
+
+    const auxiliairesPasseSimple = [
+        "eus","eut","eûmes","eûtes","eurent",
+        "fus","fut","fûmes","fûtes","furent"
+    ];
+
+    const auxiliairesConditionnel = [
+        "aurais","aurait","aurions","auriez","auraient",
+        "serais","serait","serions","seriez","seraient"
+    ];
+
+    const auxiliairesSubjonctifPasse = [
+        "aie","aies","ait","ayons","ayez","aient",
+        "sois","soit","soyons","soyez","soient"
+    ];
+
+    const subjonctifsComplets = [
+        "sois","soit","soyons","soyez","soient",
+        "aie","aies","ait","ayons","ayez","aient",
+        "aille","ailles","allions","alliez","aillent"
+    ];
+
+    /****************************************
+     PRIORITE ABSOLUE : SUBJONCTIF PASSE
+     Que j'aie mangé
+    ****************************************/
+    for(let i = 0; i < tokens.length; i++) {
+
+        const mot = tokens[i];
+
+        if(auxiliairesSubjonctifPasse.includes(mot)) {
+
+            for(let j = i + 1; j < tokens.length; j++) {
+
+                if(tokens[j] === "ne" || tokens[j] === "pas") {
+                    continue;
+                }
+
+                if(participe(tokens[j])) {
+                    return "subjonctif passé";
+                }
+
+                break;
+            }
+        }
+    }
+
+    /****************************************
+     AUTRES TEMPS COMPOSES
+    ****************************************/
     for(let i = 0; i < tokens.length; i++) {
 
         const mot = tokens[i];
         const suivant = tokens[i + 1];
 
-        /************************************************
-         PASSE COMPOSE
-         j'ai mangé
-        ************************************************/
-        const auxiliairesPresent = [
-            "ai","as","a",
-            "avons","avez","ont",
-
-            "suis","es","est",
-            "sommes","êtes","sont"
-        ];
-
-        if(
-            auxiliairesPresent.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
-            return "passé composé";
-        }
-
-        /************************************************
-         PLUS QUE PARFAIT
-         j'avais mangé
-        ************************************************/
-        const auxiliairesImparfait = [
-            "avais","avait","avions",
-            "aviez","avaient",
-
-            "étais","était",
-            "étions","étiez","étaient"
-        ];
-
-        if(
-            auxiliairesImparfait.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
-            return "plus-que-parfait";
-        }
-
-        /************************************************
-         FUTUR ANTERIEUR
-         j'aurai mangé
-        ************************************************/
-        const auxiliairesFutur = [
-            "aurai","auras","aura",
-            "aurons","aurez","auront",
-
-            "serai","seras","sera",
-            "serons","serez","seront"
-        ];
-
-        if(
-            auxiliairesFutur.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
-            return "futur antérieur";
-        }
-
-        /************************************************
-         PASSE ANTERIEUR
-         j'eus mangé
-        ************************************************/
-        const auxiliairesPasseSimple = [
-            "eus","eut","eûmes",
-            "eûtes","eurent",
-
-            "fus","fut","fûmes",
-            "fûtes","furent"
-        ];
-
-        if(
-            auxiliairesPasseSimple.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
+        if(auxiliairesPasseSimple.includes(mot) && suivant && participe(suivant)) {
             return "passé antérieur";
         }
 
-        /************************************************
-         CONDITIONNEL PASSE
-         j'aurais mangé
-        ************************************************/
-        const auxiliairesConditionnel = [
-            "aurais","aurait","aurions",
-            "auriez","auraient",
-
-            "serais","serait","serions",
-            "seriez","seraient"
-        ];
-
-        if(
-            auxiliairesConditionnel.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
+        if(auxiliairesConditionnel.includes(mot) && suivant && participe(suivant)) {
             return "conditionnel passé";
         }
 
-        /************************************************
-         SUBJONCTIF PASSE
-         que j'aie mangé
-        ************************************************/
-        const auxiliairesSubjonctifPasse = [
-            "aie","aies","ait",
-            "ayons","ayez","aient",
-
-            "sois","soit","soyons",
-            "soyez","soient"
-        ];
-
-        if(
-            auxiliairesSubjonctifPasse.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
-            return "subjonctif passé";
+        if(auxiliairesFutur.includes(mot) && suivant && participe(suivant)) {
+            return "futur antérieur";
         }
 
-        /************************************************
-         IMPERATIF COMPOSE
-         aie mangé
-        ************************************************/
-        const imperatifCompose = [
-            "aie","ayons","ayez",
-            "sois","soyons","soyez"
-        ];
-
-        if(
-            imperatifCompose.includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
-            return "impératif composé";
+        if(auxiliairesImparfait.includes(mot) && suivant && participe(suivant)) {
+            return "plus-que-parfait";
         }
 
-        /************************************************
-         INFINITIF PASSE
-         avoir mangé
-        ************************************************/
-        if(
-            ["avoir","être"].includes(mot) &&
-            suivant &&
-            participe(suivant)
-        ) {
-
-            return "infinitif passé";
+        if(auxiliairesPresent.includes(mot) && suivant && participe(suivant)) {
+            return "passé composé";
         }
+    }
 
-        /************************************************
-         GERONDIF
-         en mangeant
-        ************************************************/
-        if(
-            mot === "en" &&
-            suivant &&
-            suivant.endsWith("ant")
-        ) {
+    /****************************************
+     SUBJONCTIF PRESENT
+     Que je mange
+    ****************************************/
+    if(
+        (tokens[0] === "que" || tokens[0] === "qu'") &&
+        detectVerbe(tokens)
+    ) {
+        return "subjonctif présent";
+    }
 
-            return "gérondif";
-        }
+    for(let i = 0; i < tokens.length; i++) {
 
-        /************************************************
-         PARTICIPE PRESENT
-         mangeant
-        ************************************************/
-        if(mot.endsWith("ant")) {
+        const mot = tokens[i];
 
-            return "participe présent";
-        }
-
-        /************************************************
-         SUBJONCTIF PRESENT
-        ************************************************/
-        const subjonctifPresent = [
-            "aille","ailles","aille",
-            "allions","alliez","aillent",
-
-            "sois","soit","soyons",
-            "soyez","soient",
-
-            "aie","aies","ait",
-            "ayons","ayez","aient"
-        ];
-
-        if(subjonctifPresent.includes(mot)) {
-
+        if(subjonctifsComplets.includes(mot)) {
             return "subjonctif présent";
         }
 
-        /************************************************
-         CONDITIONNEL PRESENT
-        ************************************************/
         if(
             mot.endsWith("rais") ||
             mot.endsWith("rait") ||
@@ -1249,13 +1165,9 @@ function detectTempsVerbal(tokens) {
             mot.endsWith("riez") ||
             mot.endsWith("raient")
         ) {
-
             return "conditionnel présent";
         }
 
-        /************************************************
-         FUTUR SIMPLE
-        ************************************************/
         if(
             mot.endsWith("rai") ||
             mot.endsWith("ras") ||
@@ -1267,64 +1179,43 @@ function detectTempsVerbal(tokens) {
             return "futur simple";
         }
 
-        /************************************************
-		 PRESENT VERBES IRREGULIERS
-		************************************************/
-		const presentsIrreguliers = [
-            "vais","vas","va",
-            "allons","allez","vont",
-
-            "sais",
-            "crois",
-            "vois",
-            "pense"
+        const presentsIrreguliers = [
+            "vais","vas","va","allons","allez","vont",
+            "sais","crois","vois","pense"
         ];
 
         if(presentsIrreguliers.includes(mot)) {
             return "présent";
         }
 
-        /************************************************
-         IMPARFAIT
-        ************************************************/
         if(
             mot.endsWith("ais") ||
             mot.endsWith("ait") ||
             mot.endsWith("ions")
         ) {
-
             return "imparfait";
         }
 
-        /************************************************
-         PASSE SIMPLE
-        ************************************************/
         if(
             mot.endsWith("ai") ||
             mot.endsWith("as") ||
             mot.endsWith("a") ||
+            mot.endsWith("âmes") ||
+            mot.endsWith("âtes") ||
             mot.endsWith("èrent")
         ) {
-
             return "passé simple";
         }
 
-        /************************************************
-		 INFINITIF
-		************************************************/
-		if(
-		    mot.endsWith("er") ||
-		    mot.endsWith("ir") ||
-		    mot.endsWith("re")
-		) {
-
-		    return "infinitif";
-		}
+        if(
+            mot.endsWith("er") ||
+            mot.endsWith("ir") ||
+            mot.endsWith("re")
+        ) {
+            return "infinitif";
+        }
     }
 
-    /************************************************
-     PRESENT PAR DEFAUT
-    ************************************************/
     return "présent";
 }
 /********************************************************
@@ -1332,28 +1223,28 @@ function detectTempsVerbal(tokens) {
 ********************************************************/
 function detectGenreNombre(mot) {
 
-	/************************************************
-	 PRONOMS
-	************************************************/
-	const pronomsSansGenre = [
+    /************************************************
+     PRONOMS
+    ************************************************/
+    const pronomsSansGenre = [
 
-	    "je","j'",
-	    "tu",
-	    "nous",
-	    "vous"
-	];
+        "je","j'",
+        "tu",
+        "nous",
+        "vous"
+    ];
 
-	if(pronomsSansGenre.includes(mot)) {
+    if(pronomsSansGenre.includes(mot)) {
 
-	    return {
+        return {
 
-	        mot,
+            mot,
 
-	        genre: "neutre",
+            genre: "neutre",
 
-	        nombre: "singulier"
-	    };
-	}
+            nombre: "singulier"
+        };
+    }
     let genre = "inconnu";
     let nombre = "singulier";
 
@@ -1380,22 +1271,22 @@ function detectGenreNombre(mot) {
 ********************************************************/
 function detectSVC(tokens) {
 
-	/**********************************************
-	 INTERROGATION INVERSEE
-	**********************************************/
-	const inversion = detectInterrogationInversee(tokens);
+    /**********************************************
+     INTERROGATION INVERSEE
+    **********************************************/
+    const inversion = detectInterrogationInversee(tokens);
 
-	if(inversion) {
+    if(inversion) {
 
-	    return {
+        return {
 
-	        sujet: inversion.sujet,
+            sujet: inversion.sujet,
 
-	        verbe: inversion.verbe,
+            verbe: inversion.verbe,
 
-	        complement: []
-	    };
-	}
+            complement: []
+        };
+    }
 
     const verbe = detectVerbe(tokens);
 
@@ -1681,7 +1572,22 @@ const auxiliairesTousComposes = [
     "suis","es","est","sommes","êtes","sont",
     "étais","était","étions","étiez","étaient",
     "serai","seras","sera","serons","serez","seront",
-    "serais","serait","serions","seriez","seraient"
+    "serais","serait","serions","seriez","seraient",
+    "eus","eut","eûmes","eûtes","eurent",
+"fus","fut","fûmes","fûtes","furent",
+// subjonctif passé
+"aie",
+"aies",
+"ait",
+"ayons",
+"ayez",
+"aient",
+
+"sois",
+"soit",
+"soyons",
+"soyez",
+"soient",
 ];
 
 const auxiliairesEtre = [
@@ -1749,19 +1655,35 @@ function normaliserParticipePasse(mot) {
 
 function detectVerbePronominal(tokens) {
 
+    const auxiliairesSubjonctifPasse = [
+        "aie","aies","ait",
+        "ayons","ayez","aient",
+        "sois","soit",
+        "soyons","soyez","soient"
+    ];
+
     for(let i = 0; i < tokens.length; i++) {
 
         const mot = tokens[i];
+        const suivant = tokens[i + 1];
+        const suivant2 = tokens[i + 2];
 
         if(!pronomsReflechis.includes(mot)) {
             continue;
         }
 
-        const suivant = tokens[i + 1];
-        const suivant2 = tokens[i + 2];
+        // IMPORTANT :
+        // Que nous ayons mangé / Que vous ayez mangé
+        // nous/vous = sujet, PAS pronom réfléchi
+        if(
+            ["nous","vous"].includes(mot) &&
+            auxiliairesSubjonctifPasse.includes(suivant) &&
+            suivant2 &&
+            estParticipePasse(suivant2)
+        ) {
+            continue;
+        }
 
-        // composé : je me suis lavé
-        // IMPORTANT : à tester AVANT "je me lave"
         if(
             suivant &&
             auxiliairesEtre.includes(suivant) &&
@@ -1778,7 +1700,6 @@ function detectVerbePronominal(tokens) {
             };
         }
 
-        // simple : je me lave
         if(
             suivant &&
             (
@@ -1930,6 +1851,30 @@ function detectVerbe(tokens) {
     for(let i = 0; i < tokens.length; i++) {
 
         const mot = tokens[i];
+
+        const auxiliairesSubjonctifPasse = [
+            "aie","aies","ait",
+            "ayons","ayez","aient",
+            "sois","soit",
+            "soyons","soyez","soient"
+        ];
+
+        if(auxiliairesSubjonctifPasse.includes(mot)) {
+
+            for(let j=i+1;j<tokens.length;j++){
+
+                if(tokens[j] === "ne" || tokens[j] === "pas"){
+                    continue;
+                }
+
+                if(estParticipePasse(tokens[j])){
+
+                    return mot + " " + tokens[j];
+                }
+
+                break;
+            }
+        }
 
         if(auxiliairesTousComposes.includes(mot)) {
 
@@ -2581,8 +2526,31 @@ function normaliserVerbeLingala(analyse) {
     const tokens = analyse.tokens;
 
     /****************************************
+     PRIORITE 0 : SUBJONCTIF PASSE
+     Que j'aie mangé
+     Que nous ayons mangé
+     Que vous ayez mangé
+    ****************************************/
+    const subjonctifPasse = [
+        "aie","aies","ait",
+        "ayons","ayez","aient",
+        "sois","soit",
+        "soyons","soyez","soient"
+    ];
+
+    for(let i = 0; i < tokens.length; i++) {
+
+        if(
+            subjonctifPasse.includes(tokens[i]) &&
+            tokens[i + 1] &&
+            estParticipePasse(tokens[i + 1])
+        ) {
+            return normaliserParticipePasse(tokens[i + 1]);
+        }
+    }
+
+    /****************************************
      1. PRONOMINAL
-     Je me suis lavé
     ****************************************/
     const pronominal =
         detectVerbePronominal(tokens);
@@ -2593,30 +2561,21 @@ function normaliserVerbeLingala(analyse) {
 
     /****************************************
      2. AUXILIAIRE ETRE
-     Elle est arrivée
-     Ils sont partis
     ****************************************/
     const auxEtre =
         detectAuxiliaireEtreCompose(tokens);
 
     if(auxEtre.actif) {
-
-        return (
-            auxEtre.participeNormalise ||
-            auxEtre.participe
-        );
+        return auxEtre.participeNormalise || auxEtre.participe;
     }
 
     /****************************************
      3. EN TRAIN DE
     ****************************************/
-    const indexTrain =
-        tokens.indexOf("train");
+    const indexTrain = tokens.indexOf("train");
 
     if(indexTrain !== -1) {
-
-        for(let i=indexTrain;i<tokens.length;i++) {
-
+        for(let i = indexTrain; i < tokens.length; i++) {
             if(
                 tokens[i].endsWith("er") ||
                 tokens[i].endsWith("ir") ||
@@ -2628,32 +2587,45 @@ function normaliserVerbeLingala(analyse) {
     }
 
     /****************************************
-     4. VERBE COMPOSE
-     J'ai réservé
-     J'avais réservé
+     4. AUXILIAIRE LITTERAIRE
+    ****************************************/
+    const auxLitteraires = [
+        "eus","eut","eûmes","eûtes","eurent",
+        "fus","fut","fûmes","fûtes","furent"
+    ];
+
+    for(let i = 0; i < tokens.length; i++) {
+        if(
+            auxLitteraires.includes(tokens[i]) &&
+            tokens[i + 1] &&
+            estParticipePasse(tokens[i + 1])
+        ) {
+            return normaliserParticipePasse(tokens[i + 1]);
+        }
+    }
+
+    /****************************************
+     5. VERBE COMPOSE
     ****************************************/
     if(
         analyse.groupeVerbal &&
         analyse.groupeVerbal.participeOuInfinitif
     ) {
-
         return normaliserParticipePasse(
             analyse.groupeVerbal.participeOuInfinitif
         );
     }
 
     /****************************************
-     5. VERBE SIMPLE
+     6. VERBE SIMPLE
     ****************************************/
     if(analyse.verbe) {
 
-        const morceaux =
-            analyse.verbe.split(" ");
+        const morceaux = analyse.verbe.split(" ");
 
         for(const mot of morceaux) {
 
-            const normalise =
-                normaliserParticipePasse(mot);
+            const normalise = normaliserParticipePasse(mot);
 
             if(racinesVerbalesLingala[normalise]) {
                 return normalise;
@@ -2677,6 +2649,26 @@ function tokensContiennent(tokens, suite) {
  SUJET LINGALA NATUREL — VERSION STABLE
 ********************************************************/
 function trouverSujetLingalaNaturel(analyse) {
+
+    const tokens = analyse.tokens;
+
+if(tokens.includes("nous"))
+    return "nous";
+
+if(tokens.includes("vous"))
+    return "vous";
+
+if(tokens.includes("ils"))
+    return "ils";
+
+if(tokens.includes("elles"))
+    return "ils";
+
+if(tokens.includes("tu"))
+    return "tu";
+
+if(tokens.includes("je") || tokens.includes("j'"))
+    return "je";
 
     const sujet = analyse.svc.sujet || [];
     const texteSujet = sujet.join(" ");
@@ -2898,6 +2890,88 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
         return prefixe + "ko" + racine;
     }
 
+    /*****************************************
+     SUBJONCTIF
+    *****************************************/
+    if(aspect === "subjonctif"){
+
+        return "ete " + prefixe + racine;
+    }
+
+    /*****************************************
+     SUBJONCTIF PASSE
+    *****************************************/
+    if(aspect === "subjonctif_passe"){
+
+        if(racine.endsWith("a")){
+
+            return "ete " +
+                   prefixe +
+                   racine.slice(0,-1) +
+                   "aki";
+        }
+
+        return "ete " +
+               prefixe +
+               racine +
+               "aki";
+    }
+
+    /*****************************************
+     PASSE SIMPLE
+    *****************************************/
+    if(aspect === "accompli_litteraire"){
+
+        if(racine === "mona")
+            return prefixe + "monaki";
+
+        if(racine === "lia")
+            return prefixe + "liaki";
+
+        if(racine.endsWith("a")){
+
+            return prefixe +
+                   racine.slice(0,-1) +
+                   "aki";
+        }
+
+        return prefixe +
+               racine +
+               "aki";
+    }
+
+    /*****************************************
+     PASSE ANTERIEUR
+    *****************************************/
+    if(aspect === "anterieur_litteraire"){
+
+        if(racine.endsWith("a")){
+
+            return prefixe +
+                   racine.slice(0,-1) +
+                   "aki kala";
+        }
+
+        return prefixe +
+               racine +
+               "aki kala";
+    }
+
+    /*****************************************
+     CONDITIONNEL PASSE AVANCE
+    *****************************************/
+    if(aspect === "conditionnel_passe"){
+
+        if(racine === "kende"){
+            return prefixe +
+                   "lingaki kokende";
+        }
+
+        return prefixe +
+               "lingaki ko" +
+               racine;
+    }
+
     return prefixe + racine;
 }
 
@@ -2906,29 +2980,43 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
  DISTINGUE LE PASSE COMPOSE, PLUS QUE PARFAIT
  FUTUR ANTERIEUR
 ********************************************************/
-function detectAspectComposeAvance(analyse) {
+function detectAspectComposeAvance(analyse){
 
-    if(!analyse || !analyse.temps) {
-        return null;
-    }
+    return aspectDepuisTempsFrancais(
+        analyse.temps
+    );
+}
 
-    if(analyse.temps === "passé composé") {
-        return "accompli";
-    }
+function aspectDepuisTempsFrancais(temps){
 
-    if(analyse.temps === "plus-que-parfait") {
-        return "anterieur_passe";
-    }
+    const map = {
 
-    if(analyse.temps === "futur antérieur") {
-        return "anterieur_futur";
-    }
+        "présent":"simple",
 
-    if(analyse.temps === "conditionnel passé") {
-        return "conditionnel_passe";
-    }
+        "imparfait":"imparfait",
 
-    return null;
+        "passé composé":"accompli",
+
+        "plus-que-parfait":"anterieur_passe",
+
+        "futur simple":"futur",
+
+        "futur antérieur":"anterieur_futur",
+
+        "conditionnel présent":"conditionnel",
+
+        "conditionnel passé":"conditionnel_passe",
+
+        "subjonctif présent":"subjonctif",
+
+        "subjonctif passé":"subjonctif_passe",
+
+        "passé simple":"accompli_litteraire",
+
+        "passé antérieur":"anterieur_litteraire"
+    };
+
+    return map[temps] || null;
 }
 
 /********************************************************
@@ -3200,43 +3288,36 @@ function detectSujetNominalLingala(tokens) {
     return null;
 }
 
-function aspectDepuisTempsFrancais(temps) {
+function aspectDepuisTempsFrancais(temps){
 
-    if(temps === "présent") {
-        return "simple";
-    }
+    const map = {
 
-    if(temps === "imparfait") {
-        return "imparfait";
-    }
+        "présent":"simple",
 
-    if(temps === "passé composé") {
-        return "accompli";
-    }
+        "imparfait":"imparfait",
 
-    if(temps === "plus-que-parfait") {
-        return "anterieur_passe";
-    }
+        "passé composé":"accompli",
 
-    if(temps === "futur simple") {
-        return "futur";
-    }
+        "plus-que-parfait":"anterieur_passe",
 
-    if(temps === "futur antérieur") {
-        return "anterieur_futur";
-    }
+        "futur simple":"futur",
 
-    if(temps === "conditionnel présent") {
-        return "conditionnel";
-    }
+        "futur antérieur":"anterieur_futur",
 
-    if(
-        temps === "conditionnel passé"
-    ) {
-        return "conditionnel_passe";
-    }
+        "conditionnel présent":"conditionnel",
 
-    return null;
+        "conditionnel passé":"conditionnel_passe",
+
+        "subjonctif présent":"subjonctif",
+
+        "subjonctif passé":"subjonctif_passe",
+
+        "passé simple":"accompli_litteraire",
+
+        "passé antérieur":"anterieur_litteraire"
+    };
+
+    return map[temps] || "simple";
 }
 
 /********************************************************
@@ -3892,6 +3973,23 @@ function genererFormesVerbeFrancais(infinitif) {
         formes.push(base + "erions");
         formes.push(base + "eriez");
         formes.push(base + "eraient");
+
+        /************************
+ PASSE SIMPLE
+ manger -> mangea
+ réserver -> réserva
+************************/
+const basePasseSimple =
+    base.endsWith("g")
+        ? base + "e"
+        : base;
+
+formes.push(basePasseSimple + "ai");
+formes.push(basePasseSimple + "as");
+formes.push(basePasseSimple + "a");
+formes.push(basePasseSimple + "âmes");
+formes.push(basePasseSimple + "âtes");
+formes.push(basePasseSimple + "èrent");
 
         /****************************************
          PARTICIPE PASSE
@@ -4798,7 +4896,7 @@ function analyseComplete(phrase) {
         prepositions: analyserPreposition(tokens),
 
         interrogationInversee:
-    	detectInterrogationInversee(tokens),
+        detectInterrogationInversee(tokens),
 
         temps: detectTempsVerbal(tokens),
 
@@ -5039,6 +5137,101 @@ console.log(genererLingalaNatif("Je peux manger"));
 console.log(genererLingalaNatif("Je voudrais partir"));
 // attendu : nalinga kokende
 
+
+console.log("=============NIVEAU5============");
+
+console.log(genererLingalaNatif("Que je mange"));
+console.log(genererLingalaNatif("Que j'aie mangé"));
+console.log(genererLingalaNatif("Il mangea"));
+console.log(genererLingalaNatif("Il eut mangé"));
+console.log(genererLingalaNatif("Il aurait mangé"));
+
+console.log(
+    analyseComplete("Que j'aie mangé")
+);
+
+const a = analyseComplete("Que j'aie mangé");
+
+console.log("temps =", a.temps);
+console.log("verbe =", a.verbe);
+console.log("groupeVerbal =", a.groupeVerbal);
+console.log(a.tokens);
+
+
+estParticipePasse("mangé");
+
+console.log(tokenizer("Que j'aie mangé"));
+console.log(estParticipePasse("mangé"));
+console.log(detectTempsVerbal(tokenizer("Que j'aie mangé")));
+
+console.log(
+    detectAspectLingala(
+        "Que j'aie mangé",
+        a
+    )
+);
+
+console.log(
+    normaliserVerbeLingala(a)
+);
+console.log(
+   "*********************"
+);
+console.log(genererLingalaNatif("Que tu aies mangé"));
+console.log(genererLingalaNatif("Qu'il ait mangé"));
+console.log(genererLingalaNatif("Que nous ayons mangé"));
+console.log(genererLingalaNatif("Que vous ayez mangé"));
+console.log(genererLingalaNatif("Qu'ils aient mangé"));
+analyseComplete("Que nous ayons mangé")
+
+const test = analyseComplete(
+    "Que nous ayons mangé"
+);
+
+console.log(test.svc);
+console.log(test.sujet);
+console.log(test.verbe);
+
+console.log(
+    "verbeNormal =",
+    normaliserVerbeLingala(test)
+);
+
+console.log(
+    "aspect =",
+    detectAspectLingala(
+        "Que nous ayons mangé",
+        test
+    )
+);
+
+console.log(
+    "sujet =",
+    trouverSujetLingalaNaturel(test)
+);
+
+console.log(test.tokens);
+console.log(test.verbe);
+console.log(JSON.stringify(test.tokens[3]));
+console.log(estParticipePasse(test.tokens[3]));
+
+console.log(
+    normaliserVerbeLingala(
+        analyseComplete("Que nous ayons mangé")
+    )
+);
+
+console.log(
+    trouverRacineLingala("manger")
+);
+
+console.log(
+    genererVerbeAspectLingala(
+        "nous",
+        "manger",
+        "subjonctif_passe"
+    )
+);
 
 </script>
 </body>
