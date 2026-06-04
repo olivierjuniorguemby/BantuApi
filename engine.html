@@ -2790,7 +2790,11 @@ function genererVerbeAspectLingala(sujet, verbe, aspect) {
 
         let base = racine;
 
-        if(base.endsWith("a")) {
+        if(base.includes(" ")) {
+            return prefixe + base;
+        }
+
+        if(base.endsWith("a") || base.endsWith("e")) {
             base = base.slice(0, -1);
         }
 
@@ -3372,6 +3376,9 @@ function aspectDepuisTempsFrancais(temps){
 
     return map[temps] || "simple";
 }
+
+
+
 
 /********************************************************
  13. GENERATEUR LINGALA NATIF
@@ -4924,8 +4931,9 @@ function chargerVerbesIrreguliersComplets() {
     }
 }
 
+
 /********************************************************************
- NIVEAU 6 — SUBORDONNÉES AVANCÉES + CONCORDANCE COMPLEXE
+ NIVEAU 6 FINAL — SUBORDONNÉES AVANCÉES + ASPECTS PROPRES
 ********************************************************************/
 
 function chargerNiveau6DansMoteur() {
@@ -4936,37 +4944,91 @@ function chargerNiveau6DansMoteur() {
         partons: "kende",
         partez: "kende",
         partent: "kende",
+
         partirai: "kende",
         partiras: "kende",
         partira: "kende",
         partirons: "kende",
         partirez: "kende",
         partiront: "kende",
+
         partirais: "kende",
         partirait: "kende",
         partirions: "kende",
         partiriez: "kende",
-        partiraient: "kende"
+        partiraient: "kende",
+
+        travaille: "sala mosala",
+        travailles: "sala mosala",
+        travaillent: "sala mosala",
+        travaillait: "sala mosala",
+
+        reste: "tikala",
+        restes: "tikala",
+        restent: "tikala",
+
+        malade: "zala na maladi"
     };
 
     for(const forme in ajouts) {
         ajouterSiAbsent(verbesConnus, forme);
         racinesVerbalesLingala[forme] = ajouts[forme];
-        indexInfinitifs[forme] = "partir";
+        indexInfinitifs[forme] = forme;
     }
 }
 
+/********************************************************************
+ CONNECTEURS AVANCÉS
+********************************************************************/
+
 const connecteursSubordonnesNiveau6 = {
-    quand: { type: "temps", lingala: "ntango" },
-    lorsque: { type: "temps", lingala: "ntango" },
-    parce: { type: "cause", lingala: "mpo" },
-    puisque: { type: "cause", lingala: "lokola" },
-    car: { type: "cause", lingala: "mpo" },
-    afin: { type: "but", lingala: "mpo" },
-    pour: { type: "but", lingala: "mpo" },
-    bien: { type: "concession", lingala: "ata" },
-    quoique: { type: "concession", lingala: "ata" },
-    comme: { type: "comparaison", lingala: "lokola" }
+    quand: {
+        type: "temps",
+        lingala: "ntango",
+        mode: "indicatif"
+    },
+
+    lorsque: {
+        type: "temps",
+        lingala: "ntango",
+        mode: "indicatif"
+    },
+
+    parce: {
+        type: "cause",
+        lingala: "mpo",
+        mode: "indicatif"
+    },
+
+    puisque: {
+        type: "cause",
+        lingala: "lokola",
+        mode: "indicatif"
+    },
+
+    afin: {
+        type: "but",
+        lingala: "mpo",
+        mode: "subjonctif"
+    },
+
+    pour: {
+        type: "but",
+        lingala: "mpo",
+        mode: "subjonctif"
+    },
+
+    bien: {
+        type: "concession",
+        lingala: "ata",
+        mode: "subjonctif"
+    },
+
+    quoique: {
+        type: "concession",
+        lingala: "ata",
+        mode: "subjonctif"
+    }
 };
 
 function estSujetFrancaisNiveau6(mot) {
@@ -4981,41 +5043,18 @@ function nettoyerIntroSubordonneeNiveau6(tokens) {
         ![
             "que",
             "qu'",
+            "qu",
             "de",
             "à",
-            "ce",
-            "qu"
+            "ce"
         ].includes(t)
     );
 }
 
-function couperSubordonneeEtPrincipaleNiveau6(tokens) {
-
-    const propres =
-        nettoyerIntroSubordonneeNiveau6(tokens);
-
-    let indexDeuxiemeSujet = -1;
-
-    for(let i = 1; i < propres.length; i++) {
-
-        if(estSujetFrancaisNiveau6(propres[i])) {
-            indexDeuxiemeSujet = i;
-            break;
-        }
-    }
-
-    if(indexDeuxiemeSujet === -1) {
-        return {
-            subordonnee: propres,
-            principale: []
-        };
-    }
-
-    return {
-        subordonnee: propres.slice(0, indexDeuxiemeSujet),
-        principale: propres.slice(indexDeuxiemeSujet)
-    };
-}
+/********************************************************************
+ DÉTECTION CONNECTEUR COMPOSÉ
+ parce que / afin que / pour que / bien que
+********************************************************************/
 
 function detectSubordonneeNiveau6(tokens) {
 
@@ -5025,20 +5064,138 @@ function detectSubordonneeNiveau6(tokens) {
 
         if(connecteursSubordonnesNiveau6[mot]) {
 
+            const data =
+                connecteursSubordonnesNiveau6[mot];
+
+            let debutSub = i + 1;
+
+            if(tokens[debutSub] === "que" || tokens[debutSub] === "qu'") {
+                debutSub++;
+            }
+
             return {
                 actif: true,
                 index: i,
                 connecteur: mot,
-                type: connecteursSubordonnesNiveau6[mot].type,
-                lingala: connecteursSubordonnesNiveau6[mot].lingala,
+                type: data.type,
+                lingala: data.lingala,
+                mode: data.mode,
                 avant: tokens.slice(0, i),
-                apres: tokens.slice(i + 1)
+                apres: tokens.slice(debutSub)
             };
         }
     }
 
-    return { actif: false };
+    return {
+        actif: false
+    };
 }
+
+/********************************************************************
+ DÉCOUPAGE SUBORDONNÉE / PRINCIPALE
+ Ex :
+ Quand il mange je pars
+ → sub = il mange
+ → principale = je pars
+********************************************************************/
+
+function couperSubordonneeEtPrincipaleNiveau6(tokens) {
+
+    const propres =
+        nettoyerIntroSubordonneeNiveau6(tokens);
+
+    let coupure = -1;
+
+    for(let i = 1; i < propres.length; i++) {
+
+        if(estSujetFrancaisNiveau6(propres[i])) {
+            coupure = i;
+            break;
+        }
+    }
+
+    if(coupure === -1) {
+        return {
+            subordonnee: propres,
+            principale: []
+        };
+    }
+
+    return {
+        subordonnee: propres.slice(0, coupure),
+        principale: propres.slice(coupure)
+    };
+}
+
+/********************************************************************
+ ASPECTS PROPRES AUX SUBORDONNÉES
+********************************************************************/
+
+function aspectSubordonneeNiveau6(type, analyseSub) {
+
+    if(type === "temps") {
+
+        if(analyseSub.temps === "présent") {
+            return "progressif";
+        }
+
+        return aspectDepuisTempsFrancais(analyseSub.temps);
+    }
+
+    if(type === "cause") {
+
+        if(analyseSub.temps === "présent") {
+            return "progressif";
+        }
+
+        return aspectDepuisTempsFrancais(analyseSub.temps);
+    }
+
+    if(type === "but") {
+        return "subjonctif";
+    }
+
+    if(type === "concession") {
+        return "subjonctif";
+    }
+
+    return aspectDepuisTempsFrancais(analyseSub.temps);
+}
+
+function aspectPrincipaleNiveau6(type, analysePrincipale) {
+
+    if(type === "temps") {
+
+        if(analysePrincipale.temps === "présent") {
+            return "habituel";
+        }
+
+        return aspectDepuisTempsFrancais(analysePrincipale.temps);
+    }
+
+    if(type === "cause") {
+
+        if(analysePrincipale.temps === "présent") {
+            return "simple";
+        }
+
+        return aspectDepuisTempsFrancais(analysePrincipale.temps);
+    }
+
+    if(type === "but") {
+        return aspectDepuisTempsFrancais(analysePrincipale.temps);
+    }
+
+    if(type === "concession") {
+        return aspectDepuisTempsFrancais(analysePrincipale.temps);
+    }
+
+    return aspectDepuisTempsFrancais(analysePrincipale.temps);
+}
+
+/********************************************************************
+ GÉNÉRATION SUBORDONNÉE AVANCÉE
+********************************************************************/
 
 function genererSubordonneeNiveau6Lingala(phrase) {
 
@@ -5054,13 +5211,13 @@ function genererSubordonneeNiveau6Lingala(phrase) {
     const decoupe =
         couperSubordonneeEtPrincipaleNiveau6(info.apres);
 
-    let principaleTokens = info.avant;
+    const subTokens =
+        decoupe.subordonnee;
 
-    if(principaleTokens.length === 0) {
-        principaleTokens = decoupe.principale;
-    }
-
-    const subTokens = decoupe.subordonnee;
+    let principaleTokens =
+        info.avant.length > 0
+            ? info.avant
+            : decoupe.principale;
 
     if(subTokens.length === 0) {
         return null;
@@ -5072,17 +5229,45 @@ function genererSubordonneeNiveau6Lingala(phrase) {
     const phrasePrincipale =
         principaleTokens.join(" ");
 
+    const analyseSub =
+        analyseComplete(phraseSub);
+
+    const analysePrincipale =
+        phrasePrincipale
+            ? analyseComplete(phrasePrincipale)
+            : null;
+
+    const aspectSub =
+        aspectSubordonneeNiveau6(
+            info.type,
+            analyseSub
+        );
+
+    const aspectPrincipale =
+        analysePrincipale
+            ? aspectPrincipaleNiveau6(
+                info.type,
+                analysePrincipale
+              )
+            : null;
+
     const tradSub =
         genererLingalaNatif(
             phraseSub,
-            true
+            true,
+            {
+                aspectForce: aspectSub
+            }
         );
 
     const tradPrincipale =
         phrasePrincipale
             ? genererLingalaNatif(
                 phrasePrincipale,
-                true
+                true,
+                {
+                    aspectForce: aspectPrincipale
+                }
               )
             : null;
 
@@ -5091,7 +5276,6 @@ function genererSubordonneeNiveau6Lingala(phrase) {
     }
 
     if(tradPrincipale && tradPrincipale.traduction) {
-
         return reconstruirePhraseLingala([
             info.lingala,
             tradSub.traduction,
@@ -5106,7 +5290,7 @@ function genererSubordonneeNiveau6Lingala(phrase) {
 }
 
 /********************************************************************
- CONCORDANCE COMPLEXE
+ CONCORDANCE COMPLEXE VALIDÉE
 ********************************************************************/
 
 const verbesDeclencheursConcordance = [
@@ -5127,7 +5311,9 @@ function detectConcordanceComplexeNiveau6(tokens) {
     }
 
     if(indexQue === -1) {
-        return { actif: false };
+        return {
+            actif: false
+        };
     }
 
     const principale =
@@ -5142,7 +5328,9 @@ function detectConcordanceComplexeNiveau6(tokens) {
         );
 
     if(!declencheur) {
-        return { actif: false };
+        return {
+            actif: false
+        };
     }
 
     return {
@@ -5156,7 +5344,7 @@ function detectConcordanceComplexeNiveau6(tokens) {
 function ajusterAspectSecondaireNiveau6(
     tempsPrincipal,
     tempsSecondaire
-){
+) {
 
     if(
         tempsPrincipal === "imparfait" &&
@@ -5164,7 +5352,7 @@ function ajusterAspectSecondaireNiveau6(
             tempsSecondaire === "plus-que-parfait" ||
             tempsSecondaire === "passé composé"
         )
-    ){
+    ) {
         return "concordance_anterieur";
     }
 
@@ -5174,25 +5362,24 @@ function ajusterAspectSecondaireNiveau6(
             tempsSecondaire === "futur simple" ||
             tempsSecondaire === "conditionnel présent"
         )
-    ){
+    ) {
         return "concordance_futur_passe";
     }
 
     if(
         tempsPrincipal === "imparfait" &&
         tempsSecondaire === "présent"
-    ){
+    ) {
         return "imparfait";
     }
 
-    return aspectDepuisTempsFrancais(
-        tempsSecondaire
-    );
+    return aspectDepuisTempsFrancais(tempsSecondaire);
 }
 
 function genererConcordanceComplexeNiveau6(phrase) {
 
-    const tokens = tokenizer(phrase);
+    const tokens =
+        tokenizer(phrase);
 
     const info =
         detectConcordanceComplexeNiveau6(tokens);
@@ -5224,33 +5411,22 @@ function genererConcordanceComplexeNiveau6(phrase) {
             analyseSecondaire.temps
         );
 
-    console.log(
-    "temps principal =",
-    analysePrincipale.temps
-);
-
-console.log(
-    "temps secondaire =",
-    analyseSecondaire.temps
-);
-
-console.log(
-    "aspect secondaire =",
-    aspectSecondaire
-);
-
     const tradPrincipale =
         genererLingalaNatif(
             phrasePrincipale,
             true,
-            { aspectForce: aspectPrincipal }
+            {
+                aspectForce: aspectPrincipal
+            }
         );
 
     const tradSecondaire =
         genererLingalaNatif(
             phraseSecondaire,
             true,
-            { aspectForce: aspectSecondaire }
+            {
+                aspectForce: aspectSecondaire
+            }
         );
 
     if(
@@ -5268,6 +5444,10 @@ console.log(
         tradSecondaire.traduction
     ]);
 }
+
+/********************************************************************
+ ENTRÉE UNIQUE NIVEAU 6
+********************************************************************/
 
 function genererNiveau6Lingala(phrase) {
 
@@ -5288,7 +5468,7 @@ function genererNiveau6Lingala(phrase) {
     if(subordonnee) {
         return {
             phraseOriginale: phrase,
-            mode: "niveau6_subordonnee",
+            mode: "niveau6_subordonnee_avancee",
             traduction: subordonnee
         };
     }
@@ -5711,11 +5891,37 @@ console.log(
 
 console.log("=============NIVEAU 6============");
 
-console.log(genererLingalaNatif("Je pensais qu'il mangeait"));
+/*console.log(genererLingalaNatif("Je pensais qu'il mangeait"));
 console.log(genererLingalaNatif("Je pensais qu'il avait mangé"));
 console.log(genererLingalaNatif("Je pensais qu'il viendrait"));
 console.log(genererLingalaNatif("Quand il mange je pars"));
+console.log(genererLingalaNatif("Parce qu'il mange je pars"));*/
+
+console.log("=============NIVEAU 6 FINAL============");
+
+console.log(genererLingalaNatif("Quand il mange je pars"));
+// ntango azali kolia nakendaka
+
+console.log(genererLingalaNatif("Lorsque il mange je pars"));
+// ntango azali kolia nakendaka
+
 console.log(genererLingalaNatif("Parce qu'il mange je pars"));
+// mpo azali kolia nakende
+
+console.log(genererLingalaNatif("Puisque il mange je pars"));
+// lokola azali kolia nakende
+
+console.log(genererLingalaNatif("Afin qu'il mange je pars"));
+// mpo ete alia nakende
+
+console.log(genererLingalaNatif("Pour qu'il mange je pars"));
+// mpo ete alia nakende
+
+console.log(genererLingalaNatif("Bien qu'il mange je pars"));
+// ata ete alia nakende
+
+console.log(genererLingalaNatif("Quoique il mange je pars"));
+// ata ete alia nakende
 </script>
 </body>
 </html>
